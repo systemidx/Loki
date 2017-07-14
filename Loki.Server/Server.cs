@@ -109,8 +109,9 @@ namespace Loki.Server
         /// <param name="port">The port.</param>
         /// <param name="routeTable">The route table.</param>
         /// <param name="securityContainer">The security container.</param>
-        public Server(string id, IPAddress host, int port, IRouteTable routeTable = null, ISecurityContainer securityContainer = null) 
-            : this(id, host.ToString(), port, routeTable, securityContainer)
+        /// <param name="listenerCount">The amount of threads to use for listening for new clients.</param>
+        public Server(string id, IPAddress host, int port, IRouteTable routeTable = null, ISecurityContainer securityContainer = null, int listenerCount = 1) 
+            : this(id, host.ToString(), port, routeTable, securityContainer, listenerCount)
         {
         }
 
