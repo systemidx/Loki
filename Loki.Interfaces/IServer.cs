@@ -42,5 +42,10 @@ namespace Loki.Interfaces
         /// </summary>
         /// <returns>Task.</returns>
         void Stop();
+
+        /// <summary>
+        /// The flag which represents usage of Nagle's Algorithm
+        /// </summary>
+        bool NoDelay { get; set; }
     }
 }

@@ -74,6 +74,11 @@ namespace Loki.Server
         /// </summary>
         public bool IsRunning { get; protected set; }
 
+        /// <summary>
+        /// The flag which represents usage of Nagle's Algorithm
+        /// </summary>
+        public bool NoDelay { get; set; }
+
         #endregion
 
         #region Constructor
@@ -170,6 +175,8 @@ namespace Loki.Server
                 if (_clientListener.Pending())
                 {
                     TcpClient client = await _clientListener.AcceptTcpClientAsync();
+                    client.Client.NoDelay = NoDelay;
+
                     _connectionManager.RegisterConnection(client);
                 }
 
