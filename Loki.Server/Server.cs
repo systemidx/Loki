@@ -33,12 +33,10 @@ namespace Loki.Server
         private readonly IWebSocketConnectionManager _connectionManager;
 
         /// <summary>
-        /// The incoming client queue
+        /// The amount of threads listening and processing clients
         /// </summary>
-        //private readonly ConcurrentQueue<TcpClient> _incomingClients = new ConcurrentQueue<TcpClient>();
-        private readonly Queue<TcpClient> _incomingClients = new Queue<TcpClient>();
+        private readonly int _listenerCount;
 
-        private readonly object _clientLock = new object();
         /// <summary>
         /// The security container
         /// </summary>
@@ -88,7 +86,8 @@ namespace Loki.Server
         /// <param name="port">The port.</param>
         /// <param name="routeTable">The route table.</param>
         /// <param name="securityContainer">The security container.</param>
-        public Server(string id, string host, int port, IRouteTable routeTable = null, ISecurityContainer securityContainer = null)
+        /// <param name="listenerCount">The amount of threads to use for listening for new clients.</param>
+        public Server(string id, string host, int port, IRouteTable routeTable = null, ISecurityContainer securityContainer = null, int listenerCount = 1)
         {
             Id = id;
             Host = host;
@@ -99,6 +98,7 @@ namespace Loki.Server
 
             _clientListener = new WrappedTcpListener(IPAddress.Parse(Host), Port);
             _connectionManager = new WebSocketConnectionManager(_routeTable, _securityContainer);
+            _listenerCount = listenerCount;
         }
 
         /// <summary>
@@ -133,21 +133,13 @@ namespace Loki.Server
             }
 
             IsRunning = true;
-            
-            ThreadHelper.CreateAndRun(HandleDeadConnections);
-            
-            int connectionThreads = 16;
-
-            for (int i = 0; i < connectionThreads * 6; ++i)
-                ThreadHelper.CreateAndRun(HandleIncomingConnections);
-
-            for (int i = 0; i < connectionThreads; ++i)
+         
+            for (int i = 0; i < _listenerCount; ++i)
                 ThreadHelper.CreateAndRun(Listen);
 
             ThreadHelper.CreateAndRun(EmitDiagnostics);
-            
-            while (IsRunning)
-                Thread.Sleep(100);
+
+            HandleDeadConnections();
         }
 
         /// <summary>
@@ -172,60 +164,15 @@ namespace Loki.Server
         /// </summary>
         private async void Listen()
         {
-            int i = 0;
             while (IsRunning)
             {
                 if (_clientListener.Pending())
                 {
-                    TcpClient client = await _clientListener.AcceptTcpClientAsync();//.AcceptTcpClient();
-
-                    lock (_queueLock)
-                    { 
-                        _queues[i].Enqueue(client);
-
-                        ++i;
-                        if (i == _queues.Count)
-                            i = 0;
-                    }
-                    //_connectionManager.RegisterConnection(client);
-                    //lock (_clientLock)
-                    //    _incomingClients.Enqueue(client);
-
-                    Thread.Sleep(10);
-                    continue;
+                    TcpClient client = await _clientListener.AcceptTcpClientAsync();
+                    _connectionManager.RegisterConnection(client);
                 }
 
                 Thread.Sleep(10);
-            }
-        }
-
-        private readonly List<Queue<TcpClient>> _queues = new List<Queue<TcpClient>>();
-        private readonly object _queueLock = new object();
-
-        /// <summary>
-        /// Handles the connections.
-        /// </summary>
-        private void HandleIncomingConnections()
-        {
-            Queue<TcpClient> queue = new Queue<TcpClient>();
-
-            lock (_queueLock)
-                _queues.Add(queue);
-
-            while (IsRunning)
-            {
-                TcpClient incomingConnection = null;
-                
-                if (queue.Count > 0)
-                    incomingConnection = queue.Dequeue();
-                
-                if (incomingConnection == null)
-                {
-                    Thread.Sleep(5);
-                    continue;
-                }
-
-                _connectionManager.RegisterConnection(incomingConnection);
             }
         }
 
