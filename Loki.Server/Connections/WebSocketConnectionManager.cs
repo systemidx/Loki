@@ -67,9 +67,9 @@ namespace Loki.Server.Connections
                 return;
 
             IWebSocketConnection socket = new WebSocketConnection(connection, _securityContainer, _routeTable);
-            _clientMap.Add(socket);
-
             socket.Listen();
+
+            _clientMap.Add(socket);
         }
 
         /// <summary>
@@ -104,53 +104,6 @@ namespace Loki.Server.Connections
                 UnregisterConnection(connection);
             }
         }
-
-        #endregion
-
-        #region Private Methods
-
-        ///// <summary>
-        ///// Adds the handler.
-        ///// </summary>
-        ///// <param name="maxClientsPerThread">The maximum clients per thread.</param>
-        ///// <param name="connection">The connection.</param>
-        //private void AddHandler(int maxClientsPerThread, IWebSocketConnection connection = null)
-        //{
-        //    IWebSocketConnectionHandler handler = new WebSocketConnectionHandler(maxClientsPerThread);
-        //    handler.Start();
-
-        //    lock (_connectionHandlerLock)
-        //        _connectionHandlers.Add(handler);
-
-        //    if (connection != null)
-        //        handler.AddConnection(connection);
-        //}
-
-        ///// <summary>
-        ///// Gets the lowest connection handler.
-        ///// </summary>
-        ///// <returns></returns>
-        //private IWebSocketConnectionHandler GetLowestConnectionHandler()
-        //{
-        //    IWebSocketConnectionHandler handler = null;
-
-        //    lock (_connectionHandlerLock)
-        //    {
-        //        for (int i = 0; i < _connectionHandlers.Count; ++i)
-        //        {
-        //            if (handler == null && _connectionHandlers[i].CanAcceptConnection)
-        //            { 
-        //                handler = _connectionHandlers[i];
-        //                continue;
-        //            }
-
-        //            if (handler != null && _connectionHandlers[i].ConnectionCount < handler.ConnectionCount)
-        //                handler = _connectionHandlers[i];
-        //        }
-        //    }
-
-        //    return handler;
-        //}
 
         #endregion
     }
