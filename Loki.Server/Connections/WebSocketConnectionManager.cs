@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using Loki.Interfaces.Connections;
@@ -10,11 +11,11 @@ namespace Loki.Server.Connections
     public class WebSocketConnectionManager : IWebSocketConnectionManager
     {
         #region Readonly Variables
-        
+
         /// <summary>
         /// The client map
         /// </summary>
-        private readonly List<IWebSocketConnection> _clientMap = new List<IWebSocketConnection>();
+        private readonly ConcurrentDictionary<IWebSocketConnection, object> _clientMap = new ConcurrentDictionary<IWebSocketConnection, object>();
 
         /// <summary>
         /// The route table
@@ -69,7 +70,7 @@ namespace Loki.Server.Connections
             IWebSocketConnection socket = new WebSocketConnection(connection, _securityContainer, _routeTable);
             socket.Listen();
 
-            _clientMap.Add(socket);
+            _clientMap[socket] = null;
         }
 
         /// <summary>
@@ -78,7 +79,16 @@ namespace Loki.Server.Connections
         /// <param name="connection">The connection.</param>
         public void UnregisterConnection(IWebSocketConnection connection)
         {
-            _clientMap.Remove(connection);
+            const int MAX_CYCLES = 5;
+
+            int i = 0;
+
+            while (!_clientMap.TryRemove(connection, out _))
+            {
+                ++i;
+                if (i >= MAX_CYCLES)
+                    return;
+            }
         }
 
         /// <summary>
@@ -88,7 +98,7 @@ namespace Loki.Server.Connections
         /// <returns></returns>
         public IWebSocketConnection[] GetConnectionsByClientIdentifier(string clientIdentifier)
         {
-            return _clientMap.Where(x => x.ClientIdentifier == clientIdentifier).ToArray();
+            return _clientMap.Where(x => x.Key.ClientIdentifier == clientIdentifier).Select(x => x.Key).ToArray();
         }
 
         /// <summary>
@@ -96,15 +106,12 @@ namespace Loki.Server.Connections
         /// </summary>
         public void RemoveDeadConnections()
         {
-            foreach (IWebSocketConnection connection in _clientMap)
-            {
-                if (connection.IsAlive)
-                    continue;
-
-                UnregisterConnection(connection);
-            }
+            foreach (var connection in _clientMap)
+                if (!connection.Key.IsAlive)
+                    UnregisterConnection(connection.Key);
         }
 
+        
         #endregion
     }
 }

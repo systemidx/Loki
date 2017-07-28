@@ -84,7 +84,7 @@ namespace Loki.Server.Connections
         /// <value>
         /// The client identifier.
         /// </value>
-        public string ClientIdentifier => HttpMetadata?.QueryStrings?.Get("id");
+        public string ClientIdentifier { get; set; }
 
         /// <summary>
         /// Gets the identifier.
@@ -100,7 +100,7 @@ namespace Loki.Server.Connections
         /// <value>
         ///   <c>true</c> if this instance is alive; otherwise, <c>false</c>.
         /// </value>
-        public bool IsAlive => !_isDisposed && _client.Connected && _client.Client.Connected;//_client != null && !_isDisposed && _client.Connected && _client.Client.Connected;
+        public bool IsAlive => !_isDisposed && _client.Connected && _client.Client.Connected;
 
         #endregion
 
@@ -184,90 +184,96 @@ namespace Loki.Server.Connections
             if (IsAlive)
                 HandleHandshake();
 
+            IWebSocketDataHandler handler = _routeTable[HttpMetadata.Route];
+            if (handler == null)
+            {
+                KillConnection("Invalid route");
+                return;
+            }
+
             while (IsAlive)
             {
-                IWebSocketDataHandler handler = _routeTable[HttpMetadata.Route];
-                if (handler == null)
-                {
-                    KillConnection("Invalid route");
-                    return;
-                }
+                HandleFrame(handler);
 
-                IWebSocketFrame frame = _frameReader.Read(_client);
-
-                if (frame == null || !frame.IsValid)
-                {
-                    Thread.Sleep(20);
-                    continue;
-                }
-                
-                if (frame.OpCode == WebSocketOpCode.ContinuationFrame)
-                {
-                    switch (_multiFrameOpCode)
-                    {
-                        case WebSocketOpCode.TextFrame:
-                            string message = Encoding.UTF8.GetString(frame.DecodedPayload, 0, frame.DecodedPayload.Length);
-
-                            handler.OnTextPart(this, new TextMultiFrameEventArgs(message, frame.IsEntirePayload));
-                            break;
-
-                        case WebSocketOpCode.BinaryFrame:
-                            handler.OnBinaryPart(this, new BinaryMultiFrameEventArgs(frame.DecodedPayload, frame.IsEntirePayload));
-                            break;
-                    }
-                }
-                else
-                {
-                    switch (frame.OpCode)
-                    {
-                        case WebSocketOpCode.ConnectionClose:
-                            handler.OnClose(this, GetConnectionCloseEventArgsFromPayload(frame.DecodedPayload));
-
-                            KillConnection(string.Empty);
-                            return;
-
-                        case WebSocketOpCode.Ping:
-                            handler.OnPing(this, new PingEventArgs(frame.DecodedPayload));
-                            break;
-
-                        case WebSocketOpCode.Pong:
-                            handler.OnPong(this, new PingEventArgs(frame.DecodedPayload));
-                            break;
-
-                        case WebSocketOpCode.TextFrame:
-                            string message = Encoding.UTF8.GetString(frame.DecodedPayload, 0, frame.DecodedPayload.Length);
-
-                            if (frame.IsEntirePayload)
-                            {
-                                handler.OnText(this, new TextFrameEventArgs(message));
-                                continue;
-                            }
-                            else
-                            {
-                                _multiFrameOpCode = frame.OpCode;
-                                handler.OnTextPart(this, new TextMultiFrameEventArgs(message, frame.IsEntirePayload));
-                            }
-                            break;
-
-                        case WebSocketOpCode.BinaryFrame:
-                            if (frame.IsEntirePayload)
-                            {
-                                handler.OnBinary(this, new BinaryFrameEventArgs(frame.DecodedPayload));
-                                continue;
-                            }
-                            else
-                            {
-                                _multiFrameOpCode = frame.OpCode;
-                                handler.OnBinaryPart(this, new BinaryMultiFrameEventArgs(frame.DecodedPayload, frame.IsEntirePayload));
-                            }
-                            break;
-                    }
-                }
+                //todo: Handle incoming queued messages
 
                 Thread.Sleep(20);
             }
             
             Dispose();
+        }
+
+        /// <summary>
+        /// Handles the frame.
+        /// </summary>
+        /// <param name="handler">The handler.</param>
+        private void HandleFrame(IWebSocketDataHandler handler)
+        {
+            IWebSocketFrame frame = _frameReader.Read(_client);
+
+            if (frame == null || !frame.IsValid)
+                return;
+
+            if (frame.OpCode == WebSocketOpCode.ContinuationFrame)
+            {
+                switch (_multiFrameOpCode)
+                {
+                    case WebSocketOpCode.TextFrame:
+                        string message = Encoding.UTF8.GetString(frame.DecodedPayload, 0, frame.DecodedPayload.Length);
+
+                        handler.OnTextPart(this, new TextMultiFrameEventArgs(message, frame.IsEntirePayload));
+                        return;
+
+                    case WebSocketOpCode.BinaryFrame:
+                        handler.OnBinaryPart(this, new BinaryMultiFrameEventArgs(frame.DecodedPayload, frame.IsEntirePayload));
+                        return;
+                }
+            }
+            else
+            {
+                switch (frame.OpCode)
+                {
+                    case WebSocketOpCode.ConnectionClose:
+                        handler.OnClose(this, GetConnectionCloseEventArgsFromPayload(frame.DecodedPayload));
+
+                        KillConnection(string.Empty);
+                        return;
+
+                    case WebSocketOpCode.Ping:
+                        handler.OnPing(this, new PingEventArgs(frame.DecodedPayload));
+                        return;
+
+                    case WebSocketOpCode.Pong:
+                        handler.OnPong(this, new PingEventArgs(frame.DecodedPayload));
+                        return;
+
+                    case WebSocketOpCode.TextFrame:
+                        string message = Encoding.UTF8.GetString(frame.DecodedPayload, 0, frame.DecodedPayload.Length);
+
+                        if (frame.IsEntirePayload)
+                        {
+                            handler.OnText(this, new TextFrameEventArgs(message));
+                        }
+                        else
+                        {
+                            _multiFrameOpCode = frame.OpCode;
+                            handler.OnTextPart(this, new TextMultiFrameEventArgs(message, frame.IsEntirePayload));
+                        }
+                        return;
+
+                    case WebSocketOpCode.BinaryFrame:
+                        if (frame.IsEntirePayload)
+                        {
+                            handler.OnBinary(this, new BinaryFrameEventArgs(frame.DecodedPayload));
+                        }
+                        else
+                        {
+                            _multiFrameOpCode = frame.OpCode;
+                            handler.OnBinaryPart(this, new BinaryMultiFrameEventArgs(frame.DecodedPayload, frame.IsEntirePayload));
+                        }
+                        return;
+                }
+            }
         }
 
         /// <summary>
@@ -323,7 +329,6 @@ namespace Loki.Server.Connections
         /// <summary>
         /// Handles the handshake.
         /// </summary>
-        /// <exception cref="WebSocketException"></exception>
         private void HandleHandshake()
         {
             const int WEB_SOCKET_VERSION = 13;
@@ -352,13 +357,9 @@ namespace Loki.Server.Connections
                 return;
             }
 
-
             string secWebSocketKey = HttpMetadata.Headers[WEB_SOCKET_KEY_HEADER];
-            string setWebSocketAccept = ComputeSocketAcceptString(secWebSocketKey);
-            string response = ("HTTP/1.1 101 Switching Protocols" + Environment.NewLine
-                               + "Connection: Upgrade" + Environment.NewLine
-                               + "Upgrade: websocket" + Environment.NewLine
-                               + "Sec-WebSocket-Accept: " + setWebSocketAccept);
+            string secWebSocketAccept = ComputeSocketAcceptString(secWebSocketKey);
+            string response = ComputeResponseString(secWebSocketAccept);
 
             HttpHelper.SetHeader(response, _frameReader.Stream);
 
@@ -380,6 +381,22 @@ namespace Loki.Server.Connections
             byte[] sha1Hash = SHA1.Create().ComputeHash(concatenatedAsBytes);
             string secWebSocketAccept = Convert.ToBase64String(sha1Hash);
             return secWebSocketAccept;
+        }
+
+        /// <summary>
+        /// Computes the response string.
+        /// </summary>
+        /// <param name="secWebSocketAccept">The sec web socket accept.</param>
+        /// <returns></returns>
+        private string ComputeResponseString(string secWebSocketAccept)
+        {
+            StringBuilder responseBuilder = new StringBuilder();
+            responseBuilder.AppendLine("HTTP/1.1 101 Switching Protocols");
+            responseBuilder.AppendLine("Connection: Upgrade");
+            responseBuilder.AppendLine("Upgrade: websocket");
+            responseBuilder.AppendLine("Sec-WebSocket-Accept: " + secWebSocketAccept);
+
+            return responseBuilder.ToString();
         }
 
         /// <summary>
