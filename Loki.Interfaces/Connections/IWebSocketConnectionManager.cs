@@ -11,23 +11,7 @@ namespace Loki.Interfaces.Connections
         /// The total connections.
         /// </value>
         int TotalConnections { get; }
-
-        /// <summary>
-        /// Gets the total handlers.
-        /// </summary>
-        /// <value>
-        /// The total handlers.
-        /// </value>
-        //int TotalHandlers { get; }
-
-        ///// <summary>
-        ///// Gets the average loop iteration in ms.
-        ///// </summary>
-        ///// <value>
-        ///// The average loop iteration in ms.
-        ///// </value>
-        //double AverageLoopIterationInMs { get; }
-
+        
         /// <summary>
         /// Registers the specified connection.
         /// </summary>

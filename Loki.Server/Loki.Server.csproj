@@ -2,15 +2,19 @@
 
   <PropertyGroup>
     <TargetFrameworks>net452;net46;net461;net462;netstandard1.6;netcoreapp1.1</TargetFrameworks>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageLicenseUrl>https://github.com/systemidx/Loki/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/systemidx/Loki</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/systemidx/Loki</RepositoryUrl>
+    <Description>A C# WebSocket Server designed for portability and high throughput.</Description>
+    <PackageTags>Loki WebSocket WebSocketServer NET</PackageTags>
+    <Authors>systemidx</Authors>
+    <Copyright>© 2017 Systemidx</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Loki.Common\Loki.Common.csproj" />
-    <ProjectReference Include="..\Loki.Interfaces\Loki.Interfaces.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.6'">
@@ -105,6 +109,11 @@
 
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Loki.Common\Loki.Common.csproj" />
+    <ProjectReference Include="..\Loki.Interfaces\Loki.Interfaces.csproj" />
   </ItemGroup>
 
 </Project>

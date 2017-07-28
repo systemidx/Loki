@@ -1,11 +1,26 @@
 ﻿using Loki.Common.Events;
 using Loki.Interfaces.Connections;
 using Loki.Interfaces.Data;
+using Loki.Interfaces.Logging;
 
 namespace Loki.Server.Data
 {
     public abstract class WebSocketDataHandler : IWebSocketDataHandler
     {
+        /// <summary>
+        /// The logger
+        /// </summary>
+        protected readonly ILogger Logger;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WebSocketDataHandler"/> class.
+        /// </summary>
+        /// <param name="logger">The logger.</param>
+        protected WebSocketDataHandler(ILogger logger)
+        {
+            Logger = logger;
+        }
+
         /// <summary>
         /// Called when [open].
         /// </summary>
