@@ -7,7 +7,6 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Security.Authentication;
 using System.Threading;
-using Loki.Common.Events;
 using Loki.Interfaces;
 using Loki.Interfaces.Connections;
 using Loki.Interfaces.Data;
@@ -17,6 +16,7 @@ using Loki.Server.Attributes;
 using Loki.Server.Connections;
 using Loki.Server.Data;
 using Loki.Server.Helpers;
+using Loki.Server.Logging;
 using Loki.Server.Security;
 
 namespace Loki.Server
@@ -122,11 +122,11 @@ namespace Loki.Server
             Id = id;
             Host = host;
             Port = port;
-
-            _logger = logger;
+            
             _listenerThreads = listenerThreads;
             _clientThreadMultiplier = clientThreadMultiplier;
 
+            _logger = logger ?? new Logger();
             _securityContainer = securityContainer ?? new SecurityContainer(null, SslProtocols.None, false, false, false);
             _routeTable = routeTable ?? BuildRouteTable();
 

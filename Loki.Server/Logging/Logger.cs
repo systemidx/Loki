@@ -6,9 +6,24 @@ namespace Loki.Server.Logging
 {
     public class Logger : ILogger
     {
+        /// <summary>
+        /// Occurs when [on error].
+        /// </summary>
         public event EventHandler<LokiErrorEventArgs> OnError;
+
+        /// <summary>
+        /// Occurs when [on warn].
+        /// </summary>
         public event EventHandler<LokiWarnEventArgs> OnWarn;
+
+        /// <summary>
+        /// Occurs when [on debug].
+        /// </summary>
         public event EventHandler<LokiDebugEventArgs> OnDebug;
+
+        /// <summary>
+        /// Occurs when [on information].
+        /// </summary>
         public event EventHandler<LokiInfoEventArgs> OnInfo;
 
         /// <summary>
