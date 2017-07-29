@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loki.Common", "Loki.Common\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loki.Server", "Loki.Server\Loki.Server.csproj", "{18059321-FD98-4785-8494-CF5D8FC35200}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loki.UnitTests", "Loki.UnitTests\Loki.UnitTests.csproj", "{A2901266-656C-420F-8E56-E6D7A2B96E30}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{18059321-FD98-4785-8494-CF5D8FC35200}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18059321-FD98-4785-8494-CF5D8FC35200}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18059321-FD98-4785-8494-CF5D8FC35200}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2901266-656C-420F-8E56-E6D7A2B96E30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2901266-656C-420F-8E56-E6D7A2B96E30}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2901266-656C-420F-8E56-E6D7A2B96E30}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2901266-656C-420F-8E56-E6D7A2B96E30}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

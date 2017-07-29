@@ -35,7 +35,7 @@ namespace Loki.Interfaces
         /// Starts the server.
         /// </summary>
         /// <returns>Task.</returns>
-        void RunAndBlock();
+        void Run(bool block = true);
         
         /// <summary>
         /// Stops the server.

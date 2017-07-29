@@ -11,13 +11,17 @@ using Loki.Common.Enum.Frame;
 using Loki.Common.Events;
 using Loki.Interfaces.Connections;
 using Loki.Interfaces.Data;
+using Loki.Interfaces.Dependency;
 using Loki.Interfaces.Frame;
 using Loki.Interfaces.Security;
+using Loki.Interfaces.Threading;
 using Loki.Server.Data;
+using Loki.Server.Dependency;
 using Loki.Server.Exceptions;
 using Loki.Server.Frame;
 using Loki.Server.Helpers;
 using Loki.Server.Security;
+using Loki.Server.Threading;
 
 namespace Loki.Server.Connections
 {
@@ -29,6 +33,11 @@ namespace Loki.Server.Connections
         /// The client
         /// </summary>
         private readonly TcpClient _client;
+
+        /// <summary>
+        /// The dependency utility
+        /// </summary>
+        private readonly IDependencyUtility _dependencyUtility;
 
         /// <summary>
         /// The security container
@@ -49,6 +58,11 @@ namespace Loki.Server.Connections
         /// The frame writer
         /// </summary>
         private readonly IWebSocketFrameWriter _frameWriter;
+
+        /// <summary>
+        /// The thread helper
+        /// </summary>
+        private readonly IThreadHelper _threadHelper;
 
         #endregion
 
@@ -110,15 +124,16 @@ namespace Loki.Server.Connections
         /// Initializes a new instance of the <see cref="WebSocketConnection" /> class.
         /// </summary>
         /// <param name="client">The client.</param>
-        /// <param name="securityContainer">The security container.</param>
-        /// <param name="routeTable">The route table.</param>
-        public WebSocketConnection(TcpClient client, ISecurityContainer securityContainer, IRouteTable routeTable)
+        /// <param name="dependencyUtility">The dependency utility.</param>
+        public WebSocketConnection(TcpClient client, IDependencyUtility dependencyUtility)
         {
             _client = client;
-            _securityContainer = securityContainer ?? new SecurityContainer(null, SslProtocols.None, false, false, false);
-            _frameReader = new WebSocketFrameReader();
-            _frameWriter = new WebSocketFrameWriter();
-            _routeTable = routeTable ?? new RouteTable();
+            _dependencyUtility = dependencyUtility ?? new DependencyUtility();
+            _securityContainer = _dependencyUtility.Resolve<ISecurityContainer>() ?? new SecurityContainer(null, SslProtocols.None, false, false, false);
+            _frameReader = _dependencyUtility.Resolve<IWebSocketFrameReader>() ?? new WebSocketFrameReader();
+            _frameWriter = _dependencyUtility.Resolve<IWebSocketFrameWriter>() ?? new WebSocketFrameWriter();
+            _routeTable = _dependencyUtility.Resolve<IRouteTable>() ?? new RouteTable();
+            _threadHelper = _dependencyUtility.Resolve<IThreadHelper>() ?? new ThreadHelper();
         }
 
         #endregion
@@ -138,7 +153,7 @@ namespace Loki.Server.Connections
         public void Listen()
         {
             if (_listeningThread == null || !_listeningThread.IsAlive)
-                _listeningThread = ThreadHelper.CreateAndRun(Receive);
+                _listeningThread = _threadHelper.CreateAndRun(Receive);
         }
 
         /// <summary>
