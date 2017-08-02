@@ -10,14 +10,17 @@ using System.Threading;
 using Loki.Interfaces;
 using Loki.Interfaces.Connections;
 using Loki.Interfaces.Data;
+using Loki.Interfaces.Dependency;
 using Loki.Interfaces.Logging;
 using Loki.Interfaces.Security;
+using Loki.Interfaces.Threading;
 using Loki.Server.Attributes;
 using Loki.Server.Connections;
 using Loki.Server.Data;
-using Loki.Server.Helpers;
+using Loki.Server.Dependency;
 using Loki.Server.Logging;
 using Loki.Server.Security;
+using Loki.Server.Threading;
 
 namespace Loki.Server
 {
@@ -26,9 +29,19 @@ namespace Loki.Server
         #region Readonly Variables
 
         /// <summary>
+        /// The dependency utility
+        /// </summary>
+        private readonly IDependencyUtility _dependencyUtility;
+
+        /// <summary>
+        /// The thread helper
+        /// </summary>
+        private readonly IThreadHelper _threadHelper;
+
+        /// <summary>
         /// The client listener
         /// </summary>
-        private readonly WrappedTcpListener _clientListener;
+        private readonly ITcpHandler _clientHandler;
 
         /// <summary>
         /// The connection manager
@@ -104,49 +117,46 @@ namespace Loki.Server
 
         #endregion
 
-        #region Constructor
+        #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Server" /> class.
+        /// Initializes a new instance of the <see cref="Server"/> class.
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <param name="host">The host.</param>
         /// <param name="port">The port.</param>
-        /// <param name="logger">The logger.</param>
-        /// <param name="routeTable">The route table.</param>
-        /// <param name="securityContainer">The security container.</param>
-        /// <param name="listenerThreads">The amount of threads to use for listening for new clients.</param>
-        /// <param name="clientThreadMultiplier">The multiplicand which represents the amount of handler threads to create in order to empty the listener queue.</param>
-        public Server(string id, string host, int port, ILogger logger = null, IRouteTable routeTable = null, ISecurityContainer securityContainer = null, int listenerThreads = 1, int clientThreadMultiplier = 3)
+        /// <param name="dependencyUtility">The dependency utility.</param>
+        /// <param name="listenerThreads">The listener threads.</param>
+        /// <param name="clientThreadMultiplier">The client thread multiplier.</param>
+        public Server(string id, string host, int port, IDependencyUtility dependencyUtility, int listenerThreads = 1, int clientThreadMultiplier = 3)
         {
             Id = id;
             Host = host;
             Port = port;
-            
+
             _listenerThreads = listenerThreads;
             _clientThreadMultiplier = clientThreadMultiplier;
+            _dependencyUtility = dependencyUtility ?? new DependencyUtility();
 
-            _logger = logger ?? new Logger();
-            _securityContainer = securityContainer ?? new SecurityContainer(null, SslProtocols.None, false, false, false);
-            _routeTable = routeTable ?? BuildRouteTable();
-
-            _clientListener = new WrappedTcpListener(IPAddress.Parse(Host), Port);
-            _connectionManager = new WebSocketConnectionManager(_routeTable, _securityContainer);
+            _logger = _dependencyUtility.Resolve<ILogger>() ?? new Logger();
+            _securityContainer = _dependencyUtility.Resolve<ISecurityContainer>() ?? new SecurityContainer(null, SslProtocols.None, false, false, false);
+            _routeTable = _dependencyUtility.Resolve<IRouteTable>() ?? BuildRouteTable();
+            _clientHandler = _dependencyUtility.Resolve<ITcpHandler>() ?? new TcpHandler(IPAddress.Parse(Host), Port);
+            _connectionManager = _dependencyUtility.Resolve<IWebSocketConnectionManager>() ?? new WebSocketConnectionManager(_dependencyUtility);
+            _threadHelper = _dependencyUtility.Resolve<IThreadHelper>() ?? new ThreadHelper();
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Server" /> class.
+        /// Initializes a new instance of the <see cref="Server"/> class.
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <param name="host">The host.</param>
         /// <param name="port">The port.</param>
-        /// <param name="logger">The logger.</param>
-        /// <param name="routeTable">The route table.</param>
-        /// <param name="securityContainer">The security container.</param>
-        /// <param name="listenerThreads">The amount of threads to use for listening for new clients.</param>
-        /// <param name="clientThreadMultiplier">The multiplicand which represents the amount of handler threads to create in order to empty the listener queue.</param>
-        public Server(string id, IPAddress host, int port, ILogger logger = null, IRouteTable routeTable = null, ISecurityContainer securityContainer = null, int listenerThreads = 1, int clientThreadMultiplier = 3)
-            : this(id, host.ToString(), port, logger, routeTable, securityContainer, listenerThreads, clientThreadMultiplier)
+        /// <param name="dependencyUtility">The dependency utility.</param>
+        /// <param name="listenerThreads">The listener threads.</param>
+        /// <param name="clientThreadMultiplier">The client thread multiplier.</param>
+        public Server(string id, IPAddress host, int port, IDependencyUtility dependencyUtility, int listenerThreads = 1, int clientThreadMultiplier = 3)
+            : this(id, host.ToString(), port, dependencyUtility, listenerThreads, clientThreadMultiplier)
         {
         }
 
@@ -157,11 +167,11 @@ namespace Loki.Server
         /// <summary>
         /// Starts the server.
         /// </summary>
-        public void RunAndBlock()
+        public void Run(bool block = true)
         {
             try
             {
-                _clientListener.Start();
+                _clientHandler.Start();
             }
             catch (SocketException e)
             {
@@ -174,15 +184,18 @@ namespace Loki.Server
 
             _logger.Debug($"Starting {_listenerThreads} listener threads");
             for(int i = 0; i < _listenerThreads; ++i)
-                _handlerThreads.Add(ThreadHelper.CreateAndRun(Listen));
+                _handlerThreads.Add(_threadHelper.CreateAndRun(Listen));
 
             _logger.Debug($"Starting {_listenerThreads * _clientThreadMultiplier} client handler threads");
             for (int i = 0; i < _listenerThreads * _clientThreadMultiplier; ++i)
-                _handlerThreads.Add(ThreadHelper.CreateAndRun(HandleIncomingClients));
+                _handlerThreads.Add(_threadHelper.CreateAndRun(HandleIncomingClients));
 
             _logger.Debug("Starting dead connection handler thread");
-            _handlerThreads.Add(ThreadHelper.CreateAndRun(HandleDeadConnections));
-            
+            _handlerThreads.Add(_threadHelper.CreateAndRun(HandleDeadConnections));
+
+            if (!block)
+                return;
+
             while (IsRunning)
                 Thread.Sleep(100);
         }
@@ -196,15 +209,25 @@ namespace Loki.Server
 
             IsRunning = false;
 
-            while (_handlerThreads.Any(x => x.IsAlive))
+            const int MAX_ITERATIONS = 10;
+            int iterations = 0;
+
+            while (_handlerThreads.Any(x => x != null && x.IsAlive))
             {
-                _logger.Info(".");
+                if (iterations >= MAX_ITERATIONS)
+                {
+                    _logger.Warn($"Failed to stop handler threads after {MAX_ITERATIONS} iterations");
+                    break;
+                }
+
+                ++iterations;
+
                 Thread.Sleep(50);
             }
 
-            _clientListener.Stop();
+            _clientHandler.Stop();
 
-            Thread.Sleep(5000);
+            _logger.Info("Server stopped");
         }
 
         /// <summary>
@@ -224,7 +247,7 @@ namespace Loki.Server
             {
                 try
                 {
-                    TcpClient client = await _clientListener.AcceptTcpClientAsync();
+                    TcpClient client = await _clientHandler.AcceptTcpClientAsync();
                     client.Client.NoDelay = NoDelay;
 
                     _incomingClientQueue.Enqueue(client);
@@ -275,21 +298,20 @@ namespace Loki.Server
             IRouteTable routeTable = new RouteTable();
             Assembly entryAssembly = Assembly.GetEntryAssembly();
 
-            IEnumerable<Type> types = entryAssembly.GetTypes()
+            IEnumerable<Type> connectionRouteAttributeTypes = entryAssembly.GetTypes()
                 .Where(x => x.GetTypeInfo()
                     .GetCustomAttributes()
                     .Any(y => y.GetType() == typeof(ConnectionRouteAttribute)));
 
-            foreach (Type type in types)
+            foreach (Type connectionRouteAttributeType in connectionRouteAttributeTypes)
             {
-                IEnumerable<ConnectionRouteAttribute> attributes =
-                    type.GetTypeInfo().GetCustomAttributes<ConnectionRouteAttribute>();
+                IEnumerable<ConnectionRouteAttribute> attributes = connectionRouteAttributeType.GetTypeInfo().GetCustomAttributes<ConnectionRouteAttribute>();
                 if (attributes == null)
                     continue;
 
                 foreach (ConnectionRouteAttribute attribute in attributes)
                 {
-                    IWebSocketDataHandler handler = Activator.CreateInstance(type, _logger) as IWebSocketDataHandler;
+                    IWebSocketDataHandler handler = Activator.CreateInstance(connectionRouteAttributeType, _logger) as IWebSocketDataHandler;
                     if (handler == null)
                         continue;
 

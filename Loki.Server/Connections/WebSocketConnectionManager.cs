@@ -1,10 +1,9 @@
 ﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using Loki.Interfaces.Connections;
-using Loki.Interfaces.Data;
-using Loki.Interfaces.Security;
+using Loki.Interfaces.Dependency;
+using Loki.Server.Dependency;
 
 namespace Loki.Server.Connections
 {
@@ -18,14 +17,9 @@ namespace Loki.Server.Connections
         private readonly ConcurrentDictionary<IWebSocketConnection, object> _clientMap = new ConcurrentDictionary<IWebSocketConnection, object>();
 
         /// <summary>
-        /// The route table
+        /// The dependency utility
         /// </summary>
-        private readonly IRouteTable _routeTable;
-
-        /// <summary>
-        /// The security container
-        /// </summary>
-        private readonly ISecurityContainer _securityContainer;
+        private readonly IDependencyUtility _dependencyUtility;
         
         #endregion
 
@@ -46,12 +40,10 @@ namespace Loki.Server.Connections
         /// <summary>
         /// Initializes a new instance of the <see cref="WebSocketConnectionManager" /> class.
         /// </summary>
-        /// <param name="routeTable">The route table.</param>
-        /// <param name="securityContainer">The security container.</param>
-        public WebSocketConnectionManager(IRouteTable routeTable, ISecurityContainer securityContainer)
+        /// <param name="dependencyUtility">The dependency utility.</param>
+        public WebSocketConnectionManager(IDependencyUtility dependencyUtility)
         {
-            _routeTable = routeTable;
-            _securityContainer = securityContainer;
+            _dependencyUtility = dependencyUtility ?? new DependencyUtility();
         }
 
         #endregion
@@ -67,7 +59,7 @@ namespace Loki.Server.Connections
             if (connection == null)
                 return;
 
-            IWebSocketConnection socket = new WebSocketConnection(connection, _securityContainer, _routeTable);
+            IWebSocketConnection socket = new WebSocketConnection(connection, _dependencyUtility);
             socket.Listen();
 
             _clientMap[socket] = null;
