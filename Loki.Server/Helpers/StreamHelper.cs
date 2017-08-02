@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace Loki.Server.Helpers
 {
-    public class BinaryReaderWriter
+    public class StreamHelper
     {
         #region Read Methods
 
@@ -40,7 +41,7 @@ namespace Loki.Server.Helpers
         /// <returns></returns>
         public static ushort ReadUShortExactly(Stream stream, bool isLittleEndian)
         {
-            byte[] lenBuffer = BinaryReaderWriter.ReadExactly(2, stream);
+            byte[] lenBuffer = StreamHelper.ReadExactly(2, stream);
 
             if (!isLittleEndian)
                 Array.Reverse(lenBuffer);
@@ -56,7 +57,7 @@ namespace Loki.Server.Helpers
         /// <returns></returns>
         public static ulong ReadULongExactly(Stream stream, bool isLittleEndian)
         {
-            byte[] lenBuffer = BinaryReaderWriter.ReadExactly(8, stream);
+            byte[] lenBuffer = StreamHelper.ReadExactly(8, stream);
 
             if (!isLittleEndian)
                 Array.Reverse(lenBuffer);
@@ -72,7 +73,7 @@ namespace Loki.Server.Helpers
         /// <returns></returns>
         public static long ReadLongExactly(Stream stream, bool isLittleEndian)
         {
-            byte[] lenBuffer = BinaryReaderWriter.ReadExactly(8, stream);
+            byte[] lenBuffer = StreamHelper.ReadExactly(8, stream);
 
             if (!isLittleEndian)
                 Array.Reverse(lenBuffer);
@@ -96,6 +97,22 @@ namespace Loki.Server.Helpers
                 Array.Reverse(buffer);
 
             stream.Write(buffer, 0, buffer.Length);
+        }
+
+        /// <summary>
+        /// Writes the string.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <param name="stream">The stream.</param>
+        /// <param name="encoding">The encoding.</param>
+        public static void WriteString(string value, Stream stream, Encoding encoding = null)
+        {
+            if (encoding == null)
+                encoding = Encoding.UTF8;
+
+            byte[] buffer = encoding.GetBytes(value);
+
+            Write(buffer, stream, true);
         }
 
         /// <summary>
