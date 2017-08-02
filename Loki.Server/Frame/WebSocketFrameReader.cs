@@ -22,7 +22,6 @@ namespace Loki.Server.Frame
         /// </summary>
         /// <param name="connection">The connection.</param>
         /// <returns></returns>
-        /// <exception cref="WebSocketException">Mask bit is not set for this payload.</exception>
         public IWebSocketFrame Read(TcpClient connection)
         {
             const byte FIN_BIT_FLAG = 0x80;
@@ -56,7 +55,6 @@ namespace Loki.Server.Frame
             bool isMaskBitSet = (secondByte & MASK_FLAG) == MASK_FLAG;
             if (!isMaskBitSet)
                 return null;
-                //throw new WebSocketException("Mask bit is not set for this payload.");
 
             //Grab the payload length
             uint payloadLength = ReadPayloadLength(secondByte, Stream);
