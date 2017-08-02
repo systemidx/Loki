@@ -7,6 +7,8 @@ namespace Loki.UnitTests.Logging
 {
     public class LoggerTests
     {
+        #region Fakes
+
         private class OnErrorException: Exception { }
 
         private enum CustomEnum
@@ -16,6 +18,8 @@ namespace Loki.UnitTests.Logging
         }
 
         private struct CustomType { }
+
+        #endregion
 
         [Fact]
         public void ErrorEventInvokesSubscribedFunction()
@@ -56,10 +60,10 @@ namespace Loki.UnitTests.Logging
             ILogger logger = new Logger();
             logger.OnDebug += (sender, args) =>
             {
-                Assert.Equal("DebugMessage", args.Message);
+                Assert.Equal(nameof(logger.OnDebug), args.Message);
             };
 
-            logger.Debug("DebugMessage");
+            logger.Debug(nameof(logger.OnDebug));
         }
 
         [Fact]
