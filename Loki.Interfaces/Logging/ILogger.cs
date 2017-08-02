@@ -26,6 +26,11 @@ namespace Loki.Interfaces.Logging
         event EventHandler<LokiInfoEventArgs> OnInfo;
 
         /// <summary>
+        /// Occurs when [on custom].
+        /// </summary>
+        event EventHandler<LokiCustomEventArgs> OnCustom;
+
+        /// <summary>
         /// Errors the specified e.
         /// </summary>
         /// <param name="e">The exception.</param>
@@ -48,5 +53,26 @@ namespace Loki.Interfaces.Logging
         /// </summary>
         /// <param name="message">The message.</param>
         void Info(string message);
+
+        /// <summary>
+        /// Customs the specified event type.
+        /// </summary>
+        /// <param name="eventType">Type of the event.</param>
+        /// <param name="message">The message.</param>
+        void Custom(string eventType, string message);
+
+        /// <summary>
+        /// Customs the specified event type.
+        /// </summary>
+        /// <param name="eventType">Type of the event.</param>
+        /// <param name="message">The message.</param>
+        void Custom(Enum eventType, string message);
+
+        /// <summary>
+        /// Customs the specified event type.
+        /// </summary>
+        /// <param name="eventType">Type of the event.</param>
+        /// <param name="message">The message.</param>
+        void Custom(Type eventType, string message);
     }
 }
