@@ -20,3 +20,49 @@ The reason for the creation of this project comes mainly from frustration with e
 
 ## Examples
 ------
+
+###Minimum Setup
+------
+For minimum setup, you need to do two things. The first is to create the default route. 
+
+```cs
+using Loki.Common.Events;
+using Loki.Interfaces.Connections;
+using Loki.Interfaces.Logging;
+using Loki.Server.Attributes;
+using Loki.Server.Data;
+
+namespace LokiCoreServer.Routes
+{
+    [ConnectionRoute("/")]
+    public class Default : WebSocketDataHandler
+    {
+        public override void OnOpen(IWebSocketConnection sender, ConnectionOpenedEventArgs args)
+        {
+            Logger.Info($"JOIN {sender.UniqueIdentifier}/{sender.ClientIdentifier}");
+            base.OnOpen(sender, args);
+        }
+
+        public override void OnClose(IWebSocketConnection sender, ConnectionClosedEventArgs args)
+        {
+            Logger.Info($"DISC {sender.UniqueIdentifier}/{sender.ClientIdentifier}");
+            base.OnClose(sender, args);
+        }
+
+        public override void OnText(IWebSocketConnection sender, TextFrameEventArgs args)
+        {
+            Logger.Debug($"RECV {sender.UniqueIdentifier}/{sender.ClientIdentifier} {args.Message.Length * 2} bytes");
+
+            //Respond with the same text
+            sender.SendText(args.Message);
+
+            base.OnText(sender, args);
+        }
+
+        public Default(ILogger logger) : base(logger)
+        {
+            Logger.Debug("Route created: / => Default");
+        }
+    }
+}
+```
