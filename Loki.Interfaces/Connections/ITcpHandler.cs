@@ -13,10 +13,20 @@ namespace Loki.Interfaces.Connections
         /// </value>
         bool IsAlive { get; }
 
+        /// <summary>
+        /// Starts this instance.
+        /// </summary>
         void Start();
 
+        /// <summary>
+        /// Stops this instance.
+        /// </summary>
         void Stop();
 
+        /// <summary>
+        /// Accepts the TCP client asynchronous.
+        /// </summary>
+        /// <returns></returns>
         Task<TcpClient> AcceptTcpClientAsync();
     }
 }
