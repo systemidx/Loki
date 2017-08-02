@@ -27,6 +27,11 @@ namespace Loki.Server.Logging
         public event EventHandler<LokiInfoEventArgs> OnInfo;
 
         /// <summary>
+        /// Occurs when [on custom].
+        /// </summary>
+        public event EventHandler<LokiCustomEventArgs> OnCustom;
+
+        /// <summary>
         /// Errors the specified e.
         /// </summary>
         /// <param name="e">The <see cref="LokiErrorEventArgs"/> instance containing the event data.</param>
@@ -60,6 +65,36 @@ namespace Loki.Server.Logging
         public void Info(string message)
         {
             OnInfo?.Invoke(this, new LokiInfoEventArgs(message));
+        }
+
+        /// <summary>
+        /// Customs the specified event type.
+        /// </summary>
+        /// <param name="eventType">Type of the event.</param>
+        /// <param name="message">The message.</param>
+        public void Custom(string eventType, string message)
+        {
+            OnCustom?.Invoke(this, new LokiCustomEventArgs(eventType, message));
+        }
+
+        /// <summary>
+        /// Customs the specified event type.
+        /// </summary>
+        /// <param name="eventType">Type of the event.</param>
+        /// <param name="message">The message.</param>
+        public void Custom(Enum eventType, string message)
+        {
+            OnCustom?.Invoke(this, new LokiCustomEventArgs(eventType, message));
+        }
+
+        /// <summary>
+        /// Customs the specified event type.
+        /// </summary>
+        /// <param name="eventType">Type of the event.</param>
+        /// <param name="message">The message.</param>
+        public void Custom(Type eventType, string message)
+        {
+            OnCustom?.Invoke(this, new LokiCustomEventArgs(eventType, message));
         }
     }
 }

@@ -209,13 +209,25 @@ namespace Loki.Server
 
             IsRunning = false;
 
+            const int MAX_ITERATIONS = 10;
+            int iterations = 0;
+
             while (_handlerThreads.Any(x => x != null && x.IsAlive))
             {
-                _logger.Info(".");
+                if (iterations >= MAX_ITERATIONS)
+                {
+                    _logger.Warn($"Failed to stop handler threads after {MAX_ITERATIONS} iterations");
+                    break;
+                }
+
+                ++iterations;
+
                 Thread.Sleep(50);
             }
 
             _clientHandler.Stop();
+
+            _logger.Info("Server stopped");
         }
 
         /// <summary>
@@ -286,21 +298,20 @@ namespace Loki.Server
             IRouteTable routeTable = new RouteTable();
             Assembly entryAssembly = Assembly.GetEntryAssembly();
 
-            IEnumerable<Type> types = entryAssembly.GetTypes()
+            IEnumerable<Type> connectionRouteAttributeTypes = entryAssembly.GetTypes()
                 .Where(x => x.GetTypeInfo()
                     .GetCustomAttributes()
                     .Any(y => y.GetType() == typeof(ConnectionRouteAttribute)));
 
-            foreach (Type type in types)
+            foreach (Type connectionRouteAttributeType in connectionRouteAttributeTypes)
             {
-                IEnumerable<ConnectionRouteAttribute> attributes =
-                    type.GetTypeInfo().GetCustomAttributes<ConnectionRouteAttribute>();
+                IEnumerable<ConnectionRouteAttribute> attributes = connectionRouteAttributeType.GetTypeInfo().GetCustomAttributes<ConnectionRouteAttribute>();
                 if (attributes == null)
                     continue;
 
                 foreach (ConnectionRouteAttribute attribute in attributes)
                 {
-                    IWebSocketDataHandler handler = Activator.CreateInstance(type, _logger) as IWebSocketDataHandler;
+                    IWebSocketDataHandler handler = Activator.CreateInstance(connectionRouteAttributeType, _logger) as IWebSocketDataHandler;
                     if (handler == null)
                         continue;
 

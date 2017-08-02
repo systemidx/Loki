@@ -30,7 +30,10 @@ namespace Loki.Server.Threading
         /// <param name="arg">The argument.</param>
         public void Create(Action<object> action, object arg = null)
         {
-            ThreadPool.QueueUserWorkItem(x => action?.Invoke(arg));
+            if (action == null)
+                throw new ArgumentNullException(nameof(action));
+
+            ThreadPool.QueueUserWorkItem(x => action.Invoke(arg));
         }
 
         /// <summary>
@@ -39,6 +42,9 @@ namespace Loki.Server.Threading
         /// <param name="action">The action.</param>
         public void Create(Action action)
         {
+            if (action == null)
+                throw new ArgumentNullException(nameof(action));
+
             ThreadPool.QueueUserWorkItem(x => action?.Invoke());
         }
     }
