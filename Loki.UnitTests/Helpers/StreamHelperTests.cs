@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Loki.UnitTests.Helpers
 {
-    public class BinaryReaderWriterTests
+    public class StreamHelperTests
     {
         #region Read Tests
 
@@ -15,7 +15,7 @@ namespace Loki.UnitTests.Helpers
         {
             using (MemoryStream ms = new MemoryStream())
             {
-                byte[] bytes = BinaryReaderWriter.ReadExactly(0, ms);
+                byte[] bytes = StreamHelper.ReadExactly(0, ms);
                 Assert.Empty(bytes);
             }
         }
@@ -36,7 +36,7 @@ namespace Loki.UnitTests.Helpers
 
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    byte[] bytes = BinaryReaderWriter.ReadExactly(expected.Length, ms);
+                    byte[] bytes = StreamHelper.ReadExactly(expected.Length, ms);
 
                     Assert.Equal(expected.Length, bytes.Length);
                     Assert.Equal(expected, encoding.GetString(bytes));
@@ -60,7 +60,7 @@ namespace Loki.UnitTests.Helpers
 
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    Assert.Throws(typeof(EndOfStreamException), () => BinaryReaderWriter.ReadExactly(expected.Length + 1, ms));
+                    Assert.Throws(typeof(EndOfStreamException), () => StreamHelper.ReadExactly(expected.Length + 1, ms));
                 }
             }
         }
@@ -79,7 +79,7 @@ namespace Loki.UnitTests.Helpers
 
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    UInt16 actual = BinaryReaderWriter.ReadUShortExactly(ms, true);
+                    UInt16 actual = StreamHelper.ReadUShortExactly(ms, true);
 
                     Assert.Equal(EXPECTED, actual);
                 }
@@ -101,7 +101,7 @@ namespace Loki.UnitTests.Helpers
 
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    UInt16 actual = BinaryReaderWriter.ReadUShortExactly(ms, false);
+                    UInt16 actual = StreamHelper.ReadUShortExactly(ms, false);
 
                     Assert.Equal(EXPECTED, actual);
                 }
@@ -122,7 +122,7 @@ namespace Loki.UnitTests.Helpers
 
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    UInt64 actual = BinaryReaderWriter.ReadULongExactly(ms, true);
+                    UInt64 actual = StreamHelper.ReadULongExactly(ms, true);
 
                     Assert.Equal(EXPECTED, actual);
                 }
@@ -144,7 +144,7 @@ namespace Loki.UnitTests.Helpers
 
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    UInt64 actual = BinaryReaderWriter.ReadULongExactly(ms, false);
+                    UInt64 actual = StreamHelper.ReadULongExactly(ms, false);
 
                     Assert.Equal(EXPECTED, actual);
                 }
@@ -165,7 +165,7 @@ namespace Loki.UnitTests.Helpers
 
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    long actual = BinaryReaderWriter.ReadLongExactly(ms, true);
+                    long actual = StreamHelper.ReadLongExactly(ms, true);
 
                     Assert.Equal(EXPECTED, actual);
                 }
@@ -187,7 +187,7 @@ namespace Loki.UnitTests.Helpers
 
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    long actual = BinaryReaderWriter.ReadLongExactly(ms, false);
+                    long actual = StreamHelper.ReadLongExactly(ms, false);
 
                     Assert.Equal(EXPECTED, actual);
                 }
@@ -199,102 +199,119 @@ namespace Loki.UnitTests.Helpers
         #region Write Tests
 
         [Fact]
-        public void BinaryWriterWritesULongToStream()
+        public void StreamHelperWritesStringToStream()
+        {
+            const string EXPECTED = "ASFLKSJDFLKJWEQRLKWEJR";
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                StreamHelper.WriteString(EXPECTED, ms, Encoding.UTF8);
+
+                ms.Seek(0, SeekOrigin.Begin);
+
+                string actual = Encoding.UTF8.GetString(ms.ToArray());
+
+                Assert.Equal(EXPECTED, actual);
+            }
+        }
+
+        [Fact]
+        public void StreamHelperWritesULongToStream()
         {
             const ulong EXPECTED = ulong.MaxValue - 1;
 
             using (MemoryStream ms = new MemoryStream())
             {
-                BinaryReaderWriter.WriteULong(EXPECTED, ms, true);
+                StreamHelper.WriteULong(EXPECTED, ms, true);
 
                 ms.Seek(0, SeekOrigin.Begin);
 
-                ulong actual = BinaryReaderWriter.ReadULongExactly(ms, true);
+                ulong actual = StreamHelper.ReadULongExactly(ms, true);
 
                 Assert.Equal(EXPECTED, actual);
             }
         }
 
         [Fact]
-        public void BinaryWriterWritesULongToStreamAsBigEndian()
+        public void StreamHelperWritesULongToStreamAsBigEndian()
         {
             ulong expected = ulong.MaxValue;
 
             using (MemoryStream ms = new MemoryStream())
             {
-                BinaryReaderWriter.WriteULong(expected, ms, false);
+                StreamHelper.WriteULong(expected, ms, false);
 
                 ms.Seek(0, SeekOrigin.Begin);
 
-                ulong actual = BinaryReaderWriter.ReadULongExactly(ms, false);
+                ulong actual = StreamHelper.ReadULongExactly(ms, false);
 
                 Assert.Equal(expected, actual);
             }
         }
 
         [Fact]
-        public void BinaryWriterWritesLongToStream()
+        public void StreamHelperWritesLongToStream()
         {
             const long EXPECTED = long.MaxValue - 1;
 
             using (MemoryStream ms = new MemoryStream())
             {
-                BinaryReaderWriter.WriteULong(EXPECTED, ms, true);
+                StreamHelper.WriteULong(EXPECTED, ms, true);
 
                 ms.Seek(0, SeekOrigin.Begin);
 
-                long actual = BinaryReaderWriter.ReadLongExactly(ms, true);
+                long actual = StreamHelper.ReadLongExactly(ms, true);
 
                 Assert.Equal(EXPECTED, actual);
             }
         }
 
         [Fact]
-        public void BinaryWriterWritesLongToStreamAsBigEndian()
+        public void StreamHelperWritesLongToStreamAsBigEndian()
         {
             long expected = long.MaxValue;
 
             using (MemoryStream ms = new MemoryStream())
             {
-                BinaryReaderWriter.WriteLong(expected, ms, false);
+                StreamHelper.WriteLong(expected, ms, false);
 
                 ms.Seek(0, SeekOrigin.Begin);
 
-                long actual = BinaryReaderWriter.ReadLongExactly(ms, false);
+                long actual = StreamHelper.ReadLongExactly(ms, false);
 
                 Assert.Equal(expected, actual);
             }
         }
 
         [Fact]
-        public void BinaryWriterWritesUShortToStream()
+        public void StreamHelperWritesUShortToStream()
         {
             const ushort EXPECTED = ushort.MaxValue - 1;
 
             using (MemoryStream ms = new MemoryStream())
             {
-                BinaryReaderWriter.WriteUShort(EXPECTED, ms, true);
+                StreamHelper.WriteUShort(EXPECTED, ms, true);
 
                 ms.Seek(0, SeekOrigin.Begin);
 
-                ushort actual = BinaryReaderWriter.ReadUShortExactly(ms, true);
+                ushort actual = StreamHelper.ReadUShortExactly(ms, true);
 
                 Assert.Equal(EXPECTED, actual);
             }
         }
 
         [Fact]
-        public void BinaryWriterWritesUShortToStreamAsBigEndian()
+        public void StreamHelperWritesUShortToStreamAsBigEndian()
         {
             const ushort EXPECTED = ushort.MaxValue - 1;
 
             using (MemoryStream ms = new MemoryStream())
             {
-                BinaryReaderWriter.WriteUShort(EXPECTED, ms, false);
+                StreamHelper.WriteUShort(EXPECTED, ms, false);
 
                 ms.Seek(0, SeekOrigin.Begin);
 
-                ushort actual = BinaryReaderWriter.ReadUShortExactly(ms, false);
+                ushort actual = StreamHelper.ReadUShortExactly(ms, false);
 
                 Assert.Equal(EXPECTED, actual);
             }

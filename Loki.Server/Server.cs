@@ -128,7 +128,7 @@ namespace Loki.Server
         /// <param name="dependencyUtility">The dependency utility.</param>
         /// <param name="listenerThreads">The listener threads.</param>
         /// <param name="clientThreadMultiplier">The client thread multiplier.</param>
-        public Server(string id, string host, int port, IDependencyUtility dependencyUtility, int listenerThreads = 1, int clientThreadMultiplier = 3)
+        public Server(string id, string host, int port, IDependencyUtility dependencyUtility = null, int listenerThreads = 1, int clientThreadMultiplier = 3)
         {
             Id = id;
             Host = host;
@@ -155,7 +155,7 @@ namespace Loki.Server
         /// <param name="dependencyUtility">The dependency utility.</param>
         /// <param name="listenerThreads">The listener threads.</param>
         /// <param name="clientThreadMultiplier">The client thread multiplier.</param>
-        public Server(string id, IPAddress host, int port, IDependencyUtility dependencyUtility, int listenerThreads = 1, int clientThreadMultiplier = 3)
+        public Server(string id, IPAddress host, int port, IDependencyUtility dependencyUtility = null, int listenerThreads = 1, int clientThreadMultiplier = 3)
             : this(id, host.ToString(), port, dependencyUtility, listenerThreads, clientThreadMultiplier)
         {
         }
@@ -318,6 +318,8 @@ namespace Loki.Server
                     routeTable[attribute.Route] = handler;
                 }
             }
+
+            _dependencyUtility.Register<IRouteTable>(routeTable);
 
             return routeTable;
         }

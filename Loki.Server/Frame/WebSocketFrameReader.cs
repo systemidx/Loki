@@ -60,10 +60,10 @@ namespace Loki.Server.Frame
             uint payloadLength = ReadPayloadLength(secondByte, Stream);
             
             //Grab the crypto key from the stream
-            byte[] maskKey = BinaryReaderWriter.ReadExactly(KEY_LENGTH, Stream);
+            byte[] maskKey = StreamHelper.ReadExactly(KEY_LENGTH, Stream);
 
             //Grab the encrypted payload
-            byte[] encodedPayload = BinaryReaderWriter.ReadExactly((int) payloadLength, Stream);
+            byte[] encodedPayload = StreamHelper.ReadExactly((int) payloadLength, Stream);
 
             //Decrypt the payload
             byte[] decodedPayload = new byte[payloadLength];
@@ -88,12 +88,12 @@ namespace Loki.Server.Frame
 
             //If the value is 126, we need to read the next two bytes as per the RFC
             if (payloadLength == 126)
-                payloadLength = BinaryReaderWriter.ReadUShortExactly(stream, false);
+                payloadLength = StreamHelper.ReadUShortExactly(stream, false);
 
             //If the value is 127, we need to read the next eight bytes as per the RFC
             else if (payloadLength == 127)
             {
-                payloadLength = (uint)BinaryReaderWriter.ReadULongExactly(stream, false);
+                payloadLength = (uint)StreamHelper.ReadULongExactly(stream, false);
 
                 // protect ourselves against bad data
                 if (payloadLength > PAYLOAD_MAX_LENGTH)

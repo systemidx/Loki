@@ -375,8 +375,9 @@ namespace Loki.Server.Connections
             string secWebSocketKey = HttpMetadata.Headers[WEB_SOCKET_KEY_HEADER];
             string secWebSocketAccept = ComputeSocketAcceptString(secWebSocketKey);
             string response = ComputeResponseString(secWebSocketAccept);
-
-            HttpHelper.SetHeader(response, _frameReader.Stream);
+            
+            //HttpHelper.SetHeader(response, _frameReader.Stream);
+            StreamHelper.WriteString(response, _frameReader.Stream);
 
             IWebSocketDataHandler handler = _routeTable[HttpMetadata.Route];
             handler?.OnOpen(this, new ConnectionOpenedEventArgs(HttpMetadata.QueryStrings));
@@ -411,7 +412,7 @@ namespace Loki.Server.Connections
             responseBuilder.AppendLine("Upgrade: websocket");
             responseBuilder.AppendLine("Sec-WebSocket-Accept: " + secWebSocketAccept);
 
-            return responseBuilder.ToString();
+            return responseBuilder.ToString().Trim() + Environment.NewLine + Environment.NewLine;
         }
 
         /// <summary>
@@ -425,7 +426,7 @@ namespace Loki.Server.Connections
             {
                 using (MemoryStream stream = new MemoryStream(payload))
                 {
-                    ushort code = BinaryReaderWriter.ReadUShortExactly(stream, false);
+                    ushort code = StreamHelper.ReadUShortExactly(stream, false);
 
                     try
                     {

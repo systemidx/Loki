@@ -65,7 +65,7 @@ namespace Loki.Server.Data
             return null;
         }
 
-        private static string[] GetHeadersFromStreamBlob(string header)
+        private string[] GetHeadersFromStreamBlob(string header)
         {
             if (string.IsNullOrEmpty(header))
                 return null;
