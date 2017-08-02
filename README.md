@@ -21,7 +21,7 @@ The reason for the creation of this project comes mainly from frustration with e
 ## Examples
 ------
 
-###Minimum Setup
+### Minimum Setup
 ------
 For minimum setup, you need to do two things. The first is to create the default route. 
 
@@ -45,7 +45,7 @@ namespace LokiCoreServer.Routes
 
         public override void OnClose(IWebSocketConnection sender, ConnectionClosedEventArgs args)
         {
-            Logger.Info($"DISC {sender.UniqueIdentifier}/{sender.ClientIdentifier}");
+            Logger.Info($"QUIT {sender.UniqueIdentifier}/{sender.ClientIdentifier}");
             base.OnClose(sender, args);
         }
 
@@ -62,6 +62,37 @@ namespace LokiCoreServer.Routes
         public Default(ILogger logger) : base(logger)
         {
             Logger.Debug("Route created: / => Default");
+        }
+    }
+}
+```
+
+This tells the server that any request that comes in with the `/` route will be handled by that particular WebSocketDataHandler. The route object is subscribed to a multitude of events. It handles both text and binary transmissions as well as partial and full frames. Loki can also handle multiple routes per server instance. The routes are picked up through reflection on server start by annotating the class with the ConnectionRoute attribute. 
+
+The next step is instantiating the server itself. The code below binds the server to any IPv4 address available.
+
+```cs
+using System;
+using System.Net;
+using Loki.Interfaces;
+using Loki.Server;
+
+namespace LokiCoreServer
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            //Set port and host
+            int port = Convert.ToInt32(1337);
+            IPAddress host = IPAddress.Parse("0.0.0.0");
+            
+            //Start the server
+            using (IServer server = new Server("MyServerName", host, port))
+            {
+                //Start listening and blocking the main thread
+                server.Run();
+            }
         }
     }
 }
