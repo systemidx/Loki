@@ -23,34 +23,8 @@ namespace Loki.UnitTests.Dependency
                 Id = id;
             }
         }
-
-        private struct TestStructure
-        {
-            public readonly Guid Id;
-
-            public TestStructure(Guid id)
-            {
-                Id = id;
-            }
-        }
-
+        
         #endregion
-
-        /// <summary>
-        /// Registers and resolves structs.
-        /// </summary>
-        [Fact]
-        public void DependencyUtilityRegistersAndResolvesStructs()
-        {
-            Guid id = Guid.NewGuid();
-            IDependencyUtility utility = new DependencyUtility();
-
-            utility.Register<TestStructure>(new TestStructure(id));
-
-            TestStructure resolvedObject = utility.Resolve<TestStructure>();
-
-            Assert.Equal(id, resolvedObject.Id);
-        }
 
         /// <summary>
         /// Registers and resolves classes.

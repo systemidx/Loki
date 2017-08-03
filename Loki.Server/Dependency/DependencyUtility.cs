@@ -16,12 +16,14 @@ namespace Loki.Server.Dependency
         /// </summary>
         /// <typeparam name="TInterface">The type of the interface.</typeparam>
         /// <param name="obj">The object.</param>
-        public void Register<TInterface>(TInterface obj)
+        public TInterface Register<TInterface>(TInterface obj) where TInterface : class
         {
             if (obj == null)
-                return;
+                return null;
 
             _cache[typeof(TInterface)] = obj;
+
+            return obj;
         }
 
         /// <summary>

@@ -7,7 +7,7 @@
         /// </summary>
         /// <typeparam name="TInterface">The type of the interface.</typeparam>
         /// <param name="obj">The object.</param>
-        void Register<TInterface>(TInterface obj);
+        TInterface Register<TInterface>(TInterface obj) where TInterface : class;
 
         /// <summary>
         /// Resolves the object instance.

@@ -138,12 +138,23 @@ namespace Loki.Server
             _clientThreadMultiplier = clientThreadMultiplier;
             _dependencyUtility = dependencyUtility ?? new DependencyUtility();
 
-            _logger = _dependencyUtility.Resolve<ILogger>() ?? new Logger();
-            _securityContainer = _dependencyUtility.Resolve<ISecurityContainer>() ?? new SecurityContainer(null, SslProtocols.None, false, false, false);
-            _routeTable = _dependencyUtility.Resolve<IRouteTable>() ?? BuildRouteTable();
-            _clientHandler = _dependencyUtility.Resolve<ITcpHandler>() ?? new TcpHandler(IPAddress.Parse(Host), Port);
-            _connectionManager = _dependencyUtility.Resolve<IWebSocketConnectionManager>() ?? new WebSocketConnectionManager(_dependencyUtility);
-            _threadHelper = _dependencyUtility.Resolve<IThreadHelper>() ?? new ThreadHelper();
+            _logger = _dependencyUtility.Resolve<ILogger>() ?? 
+                _dependencyUtility.Register<ILogger>(new Logger());
+
+            _securityContainer = _dependencyUtility.Resolve<ISecurityContainer>() ??
+                _dependencyUtility.Register<ISecurityContainer>(new SecurityContainer(null, SslProtocols.None, false, false, false));
+
+            _clientHandler = _dependencyUtility.Resolve<ITcpHandler>() ?? 
+                _dependencyUtility.Register<ITcpHandler>(new TcpHandler(IPAddress.Parse(Host), Port));
+
+            _connectionManager = _dependencyUtility.Resolve<IWebSocketConnectionManager>() ?? 
+                _dependencyUtility.Register<IWebSocketConnectionManager>(new WebSocketConnectionManager(_dependencyUtility));
+
+            _threadHelper = _dependencyUtility.Resolve<IThreadHelper>() ??
+                _dependencyUtility.Register<IThreadHelper>(new ThreadHelper());
+
+            _routeTable = _dependencyUtility.Resolve<IRouteTable>() ?? 
+                _dependencyUtility.Register<IRouteTable>(BuildRouteTable());
         }
 
         /// <summary>
@@ -311,15 +322,13 @@ namespace Loki.Server
 
                 foreach (ConnectionRouteAttribute attribute in attributes)
                 {
-                    IWebSocketDataHandler handler = Activator.CreateInstance(connectionRouteAttributeType, _logger) as IWebSocketDataHandler;
+                    IWebSocketDataHandler handler = Activator.CreateInstance(connectionRouteAttributeType, _dependencyUtility) as IWebSocketDataHandler;
                     if (handler == null)
                         continue;
 
                     routeTable[attribute.Route] = handler;
                 }
             }
-
-            _dependencyUtility.Register<IRouteTable>(routeTable);
 
             return routeTable;
         }
