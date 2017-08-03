@@ -1,6 +1,6 @@
 ﻿using Loki.Common.Events;
 using Loki.Interfaces.Connections;
-using Loki.Interfaces.Logging;
+using Loki.Interfaces.Dependency;
 using Loki.Server.Attributes;
 using Loki.Server.Data;
 
@@ -9,7 +9,7 @@ namespace Loki.Example.EchoServer
     [ConnectionRoute("/")]
     public class DefaultRoute : WebSocketDataHandler
     {
-        public DefaultRoute(ILogger logger) : base(logger)
+        public DefaultRoute(IDependencyUtility dependencyUtility) : base(dependencyUtility)
         {
         }
 

@@ -35,5 +35,17 @@ namespace Loki.Interfaces.Connections
         /// <param name="clientIdentifier">The clientIdentifier.</param>
         /// <returns></returns>
         IWebSocketConnection[] GetConnectionsByClientIdentifier(string clientIdentifier);
+
+        /// <summary>
+        /// Broadcasts the specified message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        void Broadcast(string message);
+
+        /// <summary>
+        /// Broadcasts the specified bytes.
+        /// </summary>
+        /// <param name="bytes">The bytes.</param>
+        void Broadcast(byte[] bytes);
     }
 }

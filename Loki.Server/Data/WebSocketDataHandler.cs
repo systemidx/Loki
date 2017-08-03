@@ -1,6 +1,8 @@
-﻿using Loki.Common.Events;
+﻿using System;
+using Loki.Common.Events;
 using Loki.Interfaces.Connections;
 using Loki.Interfaces.Data;
+using Loki.Interfaces.Dependency;
 using Loki.Interfaces.Logging;
 
 namespace Loki.Server.Data
@@ -13,12 +15,25 @@ namespace Loki.Server.Data
         protected readonly ILogger Logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="WebSocketDataHandler"/> class.
+        /// The connection manager
         /// </summary>
-        /// <param name="logger">The logger.</param>
-        protected WebSocketDataHandler(ILogger logger)
+        protected readonly IWebSocketConnectionManager ConnectionManager;
+
+        /// <summary>
+        /// The dependency utility
+        /// </summary>
+        private readonly IDependencyUtility _dependencyUtility;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WebSocketDataHandler" /> class.
+        /// </summary>
+        /// <param name="dependencyUtility">The dependency utility.</param>
+        protected WebSocketDataHandler(IDependencyUtility dependencyUtility)
         {
-            Logger = logger;
+            _dependencyUtility = dependencyUtility ?? throw new ArgumentNullException(nameof(dependencyUtility));
+
+            Logger = _dependencyUtility.Resolve<ILogger>();
+            ConnectionManager = _dependencyUtility.Resolve<IWebSocketConnectionManager>();
         }
 
         /// <summary>
