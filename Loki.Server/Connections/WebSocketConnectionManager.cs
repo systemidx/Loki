@@ -94,6 +94,28 @@ namespace Loki.Server.Connections
         }
 
         /// <summary>
+        /// Broadcasts the specified message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        public void Broadcast(string message)
+        {
+            foreach (var connection in _clientMap)
+                if (connection.Key.IsAlive)
+                    connection.Key.SendText(message);
+        }
+
+        /// <summary>
+        /// Broadcasts the specified bytes.
+        /// </summary>
+        /// <param name="bytes">The bytes.</param>
+        public void Broadcast(byte[] bytes)
+        {
+            foreach (var connection in _clientMap)
+                if (connection.Key.IsAlive)
+                    connection.Key.SendBinary(bytes);
+        }
+
+        /// <summary>
         /// Removes the dead connections.
         /// </summary>
         public void RemoveDeadConnections()
