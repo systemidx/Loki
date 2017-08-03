@@ -9,10 +9,11 @@
     <PackageProjectUrl>https://github.com/systemidx/Loki</PackageProjectUrl>
     <RepositoryUrl>https://github.com/systemidx/Loki</RepositoryUrl>
     <Copyright>© 2017 Systemidx</Copyright>
-    <PackageTags>Loki WebSocket WebSocketServer NET</PackageTags>
-    <Version>1.0.0.1</Version>
-    <AssemblyVersion>1.0.0.1</AssemblyVersion>
-    <FileVersion>1.0.0.1</FileVersion>
+    <PackageTags>Loki WebSocket WebSocketServer NET csharp ws wss</PackageTags>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
+    <Authors>systemidx</Authors>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.6'">
