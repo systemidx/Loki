@@ -8,10 +8,11 @@
     <PackageProjectUrl>https://github.com/systemidx/Loki</PackageProjectUrl>
     <RepositoryUrl>https://github.com/systemidx/Loki</RepositoryUrl>
     <Description>A C# WebSocket Server designed for portability and high throughput.</Description>
-    <PackageTags>Loki WebSocket WebSocketServer NET</PackageTags>
+    <PackageTags>Loki WebSocket WebSocketServer NET csharp ws wss</PackageTags>
     <Authors>systemidx</Authors>
     <Copyright>© 2017 Systemidx</Copyright>
-    <Version>1.0.0.2</Version>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
