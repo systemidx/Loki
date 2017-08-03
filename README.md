@@ -130,7 +130,7 @@ namespace Loki.Example.Logging
                 server.Run();
             }
         }
-	}
+    }
 }
 ```
 
