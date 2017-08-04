@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using Loki.Common.Enum.Frame;
 
 namespace Loki.Interfaces.Frame
 {
@@ -14,12 +13,16 @@ namespace Loki.Interfaces.Frame
         Stream Stream { get; set; }
 
         /// <summary>
-        /// Writes the specified op code.
+        /// Writes the close.
         /// </summary>
-        /// <param name="opCode">The op code.</param>
-        /// <param name="payload">The payload.</param>
-        void Write(WebSocketOpCode opCode, byte[] payload);
+        void WriteClose();
 
+        /// <summary>
+        /// Writes the binary.
+        /// </summary>
+        /// <param name="payload">The payload.</param>
+        void WriteBinary(byte[] payload);
+        
         /// <summary>
         /// Writes the text.
         /// </summary>

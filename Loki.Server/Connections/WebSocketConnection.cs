@@ -13,6 +13,7 @@ using Loki.Interfaces.Connections;
 using Loki.Interfaces.Data;
 using Loki.Interfaces.Dependency;
 using Loki.Interfaces.Frame;
+using Loki.Interfaces.Logging;
 using Loki.Interfaces.Security;
 using Loki.Interfaces.Threading;
 using Loki.Server.Data;
@@ -20,6 +21,7 @@ using Loki.Server.Dependency;
 using Loki.Server.Exceptions;
 using Loki.Server.Frame;
 using Loki.Server.Helpers;
+using Loki.Server.Logging;
 using Loki.Server.Security;
 using Loki.Server.Threading;
 
@@ -64,10 +66,20 @@ namespace Loki.Server.Connections
         /// </summary>
         private readonly IThreadHelper _threadHelper;
 
+        /// <summary>
+        /// The logger
+        /// </summary>
+        private readonly ILogger _logger;
+
         #endregion
 
         #region Member Variables
-        
+
+        /// <summary>
+        /// The is disposing flag
+        /// </summary>
+        private bool _isDisposing = false;
+
         /// <summary>
         /// The is disposed flag
         /// </summary>
@@ -130,10 +142,12 @@ namespace Loki.Server.Connections
             _client = client;
             _dependencyUtility = dependencyUtility ?? new DependencyUtility();
             _securityContainer = _dependencyUtility.Resolve<ISecurityContainer>() ?? new SecurityContainer(null, SslProtocols.None, false, false, false);
-            _frameReader = _dependencyUtility.Resolve<IWebSocketFrameReader>() ?? new WebSocketFrameReader();
-            _frameWriter = _dependencyUtility.Resolve<IWebSocketFrameWriter>() ?? new WebSocketFrameWriter();
             _routeTable = _dependencyUtility.Resolve<IRouteTable>() ?? new RouteTable();
             _threadHelper = _dependencyUtility.Resolve<IThreadHelper>() ?? new ThreadHelper();
+            _logger = _dependencyUtility.Resolve<ILogger>() ?? new Logger();
+
+            _frameReader = new WebSocketFrameReader();
+            _frameWriter = new WebSocketFrameWriter();
         }
 
         #endregion
@@ -157,18 +171,45 @@ namespace Loki.Server.Connections
         }
 
         /// <summary>
+        /// Closes this instance.
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        public void Close()
+        {
+            KillConnection(null);
+        }
+
+        /// <summary>
+        /// Sends the text.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        public void SendText(string message)
+        {
+            if (!IsAlive)
+                return;
+
+            _frameWriter.WriteText(message);
+        }
+
+        /// <summary>
         /// Sends the specified object.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="obj">The object.</param>
         public void SendText<T>(T obj)
         {
-            if (!IsAlive)
-                return;
+            string serializedObject = null;
 
-            string serializedObject = JsonConvert.SerializeObject(obj);
-            
-            _frameWriter.WriteText(serializedObject);
+            try
+            {
+                serializedObject = JsonConvert.SerializeObject(obj);
+            }
+            catch (JsonSerializationException ex)
+            {
+                _logger.Error(ex);
+            }
+
+            SendText(serializedObject);
         }
 
         /// <summary>
@@ -183,7 +224,7 @@ namespace Loki.Server.Connections
             if (obj == null)
                 return;
 
-            _frameWriter.Write(WebSocketOpCode.BinaryFrame, obj);
+            _frameWriter.WriteBinary(obj);
         }
 
         #region Private Methods
@@ -195,7 +236,10 @@ namespace Loki.Server.Connections
         private void Receive()
         {
             HandleStream();
-;
+
+            if (_isDisposing)
+                return;
+
             if (IsAlive)
                 HandleHandshake();
 
@@ -295,7 +339,7 @@ namespace Loki.Server.Connections
         /// Gets the stream.
         /// </summary>
         /// <returns></returns>
-        private async void HandleStream()
+        private void HandleStream()
         {
             if (!_client.Connected)
                 return;
@@ -312,10 +356,10 @@ namespace Loki.Server.Connections
             try
             {
                 SslStream sslStream = new SslStream(stream, false);
-                await sslStream.AuthenticateAsServerAsync(_securityContainer.Certificate,
+                sslStream.AuthenticateAsServerAsync(_securityContainer.Certificate,
                     _securityContainer.ClientCertificateRequired,
                     _securityContainer.EnabledProtocols,
-                    _securityContainer.CertificateRevocationEnabled);
+                    _securityContainer.CertificateRevocationEnabled).Wait();
 
                 _frameReader.Stream = sslStream;
                 _frameWriter.Stream = sslStream;
@@ -323,6 +367,10 @@ namespace Loki.Server.Connections
             catch (AuthenticationException)
             {
                 KillConnection("Unauthorized");
+            }
+            catch (AggregateException)
+            {
+                KillConnection(null);
             }
             catch (IOException)
             {
@@ -335,12 +383,14 @@ namespace Loki.Server.Connections
         /// </summary>
         private void KillConnection(string message)
         {
+            _isDisposing = true;
+
             if (message != null)
-                _frameWriter.Write(WebSocketOpCode.ConnectionClose, Encoding.UTF8.GetBytes(message));
+                _frameWriter.WriteClose();
             
             Dispose();
         }
-
+        
         /// <summary>
         /// Handles the handshake.
         /// </summary>
@@ -375,9 +425,9 @@ namespace Loki.Server.Connections
             string secWebSocketKey = HttpMetadata.Headers[WEB_SOCKET_KEY_HEADER];
             string secWebSocketAccept = ComputeSocketAcceptString(secWebSocketKey);
             string response = ComputeResponseString(secWebSocketAccept);
-            
-            //HttpHelper.SetHeader(response, _frameReader.Stream);
-            StreamHelper.WriteString(response, _frameReader.Stream);
+
+            byte[] responseBytes = Encoding.UTF8.GetBytes(response);
+            _frameReader.Stream.Write(responseBytes, 0, responseBytes.Length);
 
             IWebSocketDataHandler handler = _routeTable[HttpMetadata.Route];
             handler?.OnOpen(this, new ConnectionOpenedEventArgs(HttpMetadata.QueryStrings));

@@ -3,7 +3,6 @@ using System.IO;
 using System.Text;
 using Loki.Common.Enum.Frame;
 using Loki.Interfaces.Frame;
-using Loki.Server.Helpers;
 
 namespace Loki.Server.Frame
 {
@@ -19,6 +18,23 @@ namespace Loki.Server.Frame
         public void Write(WebSocketOpCode opCode, byte[] payload)
         {
             Write(opCode, payload, true);
+        }
+
+        /// <summary>
+        /// Writes the binary.
+        /// </summary>
+        /// <param name="payload">The payload.</param>
+        public void WriteBinary(byte[] payload)
+        {
+            Write(WebSocketOpCode.BinaryFrame, payload);
+        }
+
+        /// <summary>
+        /// Writes the close.
+        /// </summary>
+        public void WriteClose()
+        {
+            Write(WebSocketOpCode.ConnectionClose, null, true); 
         }
 
         /// <summary>
@@ -40,35 +56,44 @@ namespace Loki.Server.Frame
         /// <param name="isLastFrame">if set to <c>true</c> [is last frame].</param>
         private void Write(WebSocketOpCode opCode, byte[] payload, bool isLastFrame)
         {
-            // best to write everything to a memory stream before we push it onto the wire
-            // not really necessary but I like it this way
+            if (Stream == null || !Stream.CanWrite)
+                return;
+            
             using (MemoryStream memoryStream = new MemoryStream())
             {
-                byte finBitSetAsByte = isLastFrame ? (byte) 0x80 : (byte) 0x00;
-                byte byte1 = (byte) (finBitSetAsByte | (byte) opCode);
-                memoryStream.WriteByte(byte1);
+                byte fin = isLastFrame ? (byte) 0x80 : (byte) 0x00;
+                byte firstByte = (byte) (fin | (byte) opCode);
+                
+                //Write fin -> opcode
+                memoryStream.WriteByte(firstByte);
 
-                // NB, dont set the mask flag. No need to mask data from server to client
-                // depending on the size of the length we want to write it as a byte, ushort or ulong
-                if (payload.Length < 126)
+                if (payload != null)
                 {
-                    byte byte2 = (byte) payload.Length;
-                    memoryStream.WriteByte(byte2);
-                }
-                else if (payload.Length <= ushort.MaxValue)
-                {
-                    byte byte2 = 126;
-                    memoryStream.WriteByte(byte2);
-                    StreamHelper.WriteUShort((ushort) payload.Length, memoryStream, false);
-                }
-                else
-                {
-                    byte byte2 = 127;
-                    memoryStream.WriteByte(byte2);
-                    StreamHelper.WriteULong((ulong) payload.Length, memoryStream, false);
+                    //Write mask & payload length
+                    byte secondByte;
+                    if (payload.Length < 126)
+                        secondByte = (byte)payload.Length;
+                    else if (payload.Length <= ushort.MaxValue)
+                        secondByte = 126;
+                    else
+                        secondByte = 127;
+
+                    memoryStream.WriteByte(secondByte);
+
+                    //Write extended payload length if necessary
+                    if (secondByte > 125)
+                    {
+                        byte[] payloadLengthBuffer = secondByte > 126 ? 
+                            BitConverter.GetBytes((ulong)payload.Length) :
+                            BitConverter.GetBytes((ushort)payload.Length);
+
+                        memoryStream.Write(payloadLengthBuffer, 0, payloadLengthBuffer.Length);
+                    }
+
+                    //Write Payload
+                    memoryStream.Write(payload, 0, payload.Length);
                 }
 
-                memoryStream.Write(payload, 0, payload.Length);
                 byte[] buffer = memoryStream.ToArray();
 
                 try
