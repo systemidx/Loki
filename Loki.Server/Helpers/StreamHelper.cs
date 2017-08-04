@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 
 namespace Loki.Server.Helpers
 {
@@ -25,7 +24,7 @@ namespace Loki.Server.Helpers
             {
                 int bytesRead = stream.Read(buffer, offset, length - offset);
                 if (bytesRead == 0)
-                    throw new EndOfStreamException($"Unexpected end of stream encountered whilst attempting to read {length:#,##0} bytes");
+                    break;
 
                 offset += bytesRead;
             } while (offset < length);
@@ -79,79 +78,6 @@ namespace Loki.Server.Helpers
                 Array.Reverse(lenBuffer);
 
             return BitConverter.ToInt64(lenBuffer, 0);
-        }
-
-        #endregion
-
-        #region Write Methods
-
-        /// <summary>
-        /// Writes the specified buffer.
-        /// </summary>
-        /// <param name="buffer">The buffer.</param>
-        /// <param name="stream">The stream.</param>
-        /// <param name="isLittleEndian">if set to <c>true</c> [is little endian].</param>
-        private static void Write(byte[] buffer, Stream stream, bool isLittleEndian)
-        {
-            if (!isLittleEndian)
-                Array.Reverse(buffer);
-
-            stream.Write(buffer, 0, buffer.Length);
-        }
-
-        /// <summary>
-        /// Writes the string.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <param name="stream">The stream.</param>
-        /// <param name="encoding">The encoding.</param>
-        public static void WriteString(string value, Stream stream, Encoding encoding = null)
-        {
-            if (encoding == null)
-                encoding = Encoding.UTF8;
-
-            byte[] buffer = encoding.GetBytes(value);
-
-            Write(buffer, stream, true);
-        }
-
-        /// <summary>
-        /// Writes the u long.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <param name="stream">The stream.</param>
-        /// <param name="isLittleEndian">if set to <c>true</c> [is little endian].</param>
-        public static void WriteULong(ulong value, Stream stream, bool isLittleEndian)
-        {
-            byte[] buffer = BitConverter.GetBytes(value);
-
-            Write(buffer, stream, isLittleEndian);
-        }
-
-        /// <summary>
-        /// Writes the long.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <param name="stream">The stream.</param>
-        /// <param name="isLittleEndian">if set to <c>true</c> [is little endian].</param>
-        public static void WriteLong(long value, Stream stream, bool isLittleEndian)
-        {
-            byte[] buffer = BitConverter.GetBytes(value);
-
-            Write(buffer, stream, isLittleEndian);
-        }
-
-        /// <summary>
-        /// Writes the u short.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <param name="stream">The stream.</param>
-        /// <param name="isLittleEndian">if set to <c>true</c> [is little endian].</param>
-        public static void WriteUShort(ushort value, Stream stream, bool isLittleEndian)
-        {
-            byte[] buffer = BitConverter.GetBytes(value);
-
-            Write(buffer, stream, isLittleEndian);
         }
 
         #endregion

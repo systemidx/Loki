@@ -5,11 +5,11 @@
     /// </summary>
     public enum WebSocketOpCode
     {
-        ContinuationFrame = 0,
-        TextFrame = 1,
-        BinaryFrame = 2,
-        ConnectionClose = 8,
-        Ping = 9,
-        Pong = 10
+        ContinuationFrame = 0x0,
+        TextFrame = 0x1,
+        BinaryFrame = 0x2,
+        ConnectionClose = 0x8,
+        Ping = 0x9,
+        Pong = 0x10
     }
 }

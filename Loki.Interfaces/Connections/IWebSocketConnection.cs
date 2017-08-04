@@ -14,7 +14,7 @@ namespace Loki.Interfaces.Connections
         /// <value>
         /// The client identifier.
         /// </value>
-        string ClientIdentifier { get; }
+        string ClientIdentifier { get; set; }
 
         /// <summary>
         /// Gets the identifier.
@@ -45,6 +45,17 @@ namespace Loki.Interfaces.Connections
         /// </summary>
         /// <returns></returns>
         void Listen();
+        
+        /// <summary>
+        /// Closes this instance.
+        /// </summary>
+        void Close();
+
+        /// <summary>
+        /// Sends the text.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        void SendText(string message);
 
         /// <summary>
         /// Sends the text.
