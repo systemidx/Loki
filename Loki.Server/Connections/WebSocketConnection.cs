@@ -121,6 +121,14 @@ namespace Loki.Server.Connections
         public Guid UniqueIdentifier { get; } = Guid.NewGuid();
 
         /// <summary>
+        /// Gets the unique client identifier.
+        /// </summary>
+        /// <value>
+        /// The unique client identifier.
+        /// </value>
+        public string UniqueClientIdentifier => $"{ClientIdentifier}/{UniqueIdentifier}";
+
+        /// <summary>
         /// Gets a value indicating whether this instance is alive.
         /// </summary>
         /// <value>
@@ -146,8 +154,8 @@ namespace Loki.Server.Connections
             _threadHelper = _dependencyUtility.Resolve<IThreadHelper>() ?? new ThreadHelper();
             _logger = _dependencyUtility.Resolve<ILogger>() ?? new Logger();
 
-            _frameReader = new WebSocketFrameReader();
-            _frameWriter = new WebSocketFrameWriter();
+            _frameReader = new WebSocketFrameReader(_dependencyUtility);
+            _frameWriter = new WebSocketFrameWriter(_dependencyUtility);
         }
 
         #endregion
@@ -225,6 +233,28 @@ namespace Loki.Server.Connections
                 return;
 
             _frameWriter.WriteBinary(obj);
+        }
+
+        /// <summary>
+        /// Sends the ping.
+        /// </summary>
+        public void SendPing()
+        {
+            if (!IsAlive)
+                return;
+
+            _frameWriter.Write(WebSocketOpCode.Ping, null, true);
+        }
+
+        /// <summary>
+        /// Sends the pong.
+        /// </summary>
+        public void SendPong()
+        {
+            if (!IsAlive)
+                return;
+
+            _frameWriter.Write(WebSocketOpCode.Pong, null, true);
         }
 
         #region Private Methods
@@ -344,8 +374,8 @@ namespace Loki.Server.Connections
             if (!_client.Connected)
                 return;
 
-            Stream stream = _client.GetStream();
-
+            NetworkStream stream = _client.GetStream();
+            
             if (!_securityContainer.Enabled)
             {
                 _frameReader.Stream = stream;

@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Loki.Common.Enum.Frame;
 
 namespace Loki.Interfaces.Frame
 {
@@ -28,5 +29,13 @@ namespace Loki.Interfaces.Frame
         /// </summary>
         /// <param name="text">The text.</param>
         void WriteText(string text);
+
+        /// <summary>
+        /// Writes the specified op code.
+        /// </summary>
+        /// <param name="opCode">The op code.</param>
+        /// <param name="payload">The payload.</param>
+        /// <param name="isLastFrame">if set to <c>true</c> [is last frame].</param>
+        void Write(WebSocketOpCode opCode, byte[] payload, bool isLastFrame);
     }
 }
