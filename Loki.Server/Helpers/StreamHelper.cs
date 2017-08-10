@@ -24,7 +24,7 @@ namespace Loki.Server.Helpers
             {
                 int bytesRead = stream.Read(buffer, offset, length - offset);
                 if (bytesRead == 0)
-                    break;
+                    throw new EndOfStreamException();
 
                 offset += bytesRead;
             } while (offset < length);

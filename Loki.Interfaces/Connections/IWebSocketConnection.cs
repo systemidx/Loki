@@ -8,6 +8,8 @@ namespace Loki.Interfaces.Connections
     /// </summary>
     public interface IWebSocketConnection : IDisposable
     {
+        #region Properties
+
         /// <summary>
         /// Gets the client identifier.
         /// </summary>
@@ -23,7 +25,15 @@ namespace Loki.Interfaces.Connections
         /// The identifier.
         /// </value>
         Guid UniqueIdentifier { get; }
-        
+
+        /// <summary>
+        /// Gets the unique client identifier.
+        /// </summary>
+        /// <value>
+        /// The unique client identifier.
+        /// </value>
+        string UniqueClientIdentifier { get; }
+
         /// <summary>
         /// Gets a value indicating whether this instance is alive.
         /// </summary>
@@ -40,6 +50,10 @@ namespace Loki.Interfaces.Connections
         /// </value>
         IHttpMetadata HttpMetadata { get; }
 
+        #endregion
+
+        #region Operational Methods
+
         /// <summary>
         /// Blocks the and receive.
         /// </summary>
@@ -50,6 +64,10 @@ namespace Loki.Interfaces.Connections
         /// Closes this instance.
         /// </summary>
         void Close();
+
+        #endregion
+
+        #region Sending Methods
 
         /// <summary>
         /// Sends the text.
@@ -69,5 +87,18 @@ namespace Loki.Interfaces.Connections
         /// </summary>
         /// <param name="obj">The object.</param>
         void SendBinary(byte[] obj);
+
+        /// <summary>
+        /// Sends the ping.
+        /// </summary>
+        void SendPing();
+
+        /// <summary>
+        /// Sends the pong.
+        /// </summary>
+        void SendPong();
+
+        #endregion
+
     }
 }

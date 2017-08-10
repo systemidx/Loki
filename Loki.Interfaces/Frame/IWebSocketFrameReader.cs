@@ -19,5 +19,6 @@ namespace Loki.Interfaces.Frame
         /// <param name="connection">The connection.</param>
         /// <returns></returns>
         IWebSocketFrame Read(TcpClient connection);
+        IWebSocketFrame Read();
     }
 }

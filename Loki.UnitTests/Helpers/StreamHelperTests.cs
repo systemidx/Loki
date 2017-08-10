@@ -29,7 +29,7 @@ namespace Loki.UnitTests.Helpers
             
             using (MemoryStream ms = new MemoryStream())
             {
-                using (StreamWriter sw = new StreamWriter(ms, encoding))
+                using (StreamWriter sw = new StreamWriter(ms))
                 {
                     sw.Write(expected);
                     sw.Flush();
@@ -48,19 +48,17 @@ namespace Loki.UnitTests.Helpers
         public void BinaryReaderThrowsExceptionWhenLengthIsGreaterThanStream()
         {
             string expected = Guid.NewGuid().ToString();
-
-            Encoding encoding = Encoding.ASCII;
-
+            
             using (MemoryStream ms = new MemoryStream())
             {
-                using (StreamWriter sw = new StreamWriter(ms, encoding))
+                using (StreamWriter sw = new StreamWriter(ms))
                 {
                     sw.Write(expected);
                     sw.Flush();
 
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    Assert.Throws(typeof(EndOfStreamException), () => StreamHelper.ReadExactly(expected.Length + 1, ms));
+                    Assert.Throws(typeof(EndOfStreamException), () => StreamHelper.ReadExactly(expected.Length + 2, ms));
                 }
             }
         }

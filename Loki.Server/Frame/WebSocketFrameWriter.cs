@@ -2,14 +2,48 @@
 using System.IO;
 using System.Text;
 using Loki.Common.Enum.Frame;
+using Loki.Interfaces.Dependency;
 using Loki.Interfaces.Frame;
+using Loki.Interfaces.Logging;
 
 namespace Loki.Server.Frame
 {
     public class WebSocketFrameWriter : IWebSocketFrameWriter
-    {        
+    {
+        #region Readonly Variables
+
+        /// <summary>
+        /// The logger
+        /// </summary>
+        private readonly ILogger _logger;
+
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+        /// Gets or sets the stream.
+        /// </summary>
+        /// <value>
+        /// The stream.
+        /// </value>
         public Stream Stream { get; set; }
-        
+
+        #endregion
+
+        #region Constructor
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WebSocketFrameWriter"/> class.
+        /// </summary>
+        /// <param name="dependencyUtility">The dependency utility.</param>
+        public WebSocketFrameWriter(IDependencyUtility dependencyUtility)
+        {
+            _logger = dependencyUtility.Resolve<ILogger>();
+        }
+
+        #endregion
+
         /// <summary>
         /// Writes the specified stream.
         /// </summary>
@@ -54,62 +88,105 @@ namespace Loki.Server.Frame
         /// <param name="opCode">The op code.</param>
         /// <param name="payload">The payload.</param>
         /// <param name="isLastFrame">if set to <c>true</c> [is last frame].</param>
-        private void Write(WebSocketOpCode opCode, byte[] payload, bool isLastFrame)
+        public void Write(WebSocketOpCode opCode, byte[] payload, bool isLastFrame)
         {
             if (Stream == null || !Stream.CanWrite)
                 return;
             
+            const int FIN = 0x1;  //We are not supporting continuation frames from the server
+            const int MASK = 0x0; //We cannot mask data flowing from the server to the client
+            const int RSV = 0x0;  //RSVs are currently unused in the WebSocket specification
+
             using (MemoryStream memoryStream = new MemoryStream())
             {
-                byte fin = isLastFrame ? (byte) 0x80 : (byte) 0x00;
-                byte firstByte = (byte) (fin | (byte) opCode);
+                if (payload == null)
+                    payload = new byte[0];
+
+                //Get the payload length as per RFC 6455 (https://tools.ietf.org/html/rfc6455#section-5.2)
+                //If it's below 126 bytes, just identify the length
+                //If it's between 126 and 65535, use 126
+                //If it's larger, use 127
+                //This becomes important later as well when we need to identify the payload's length size (1 bytes, 2 bytes, or 8 bytes)
+                byte payloadLength = (byte) (payload.Length < 126 ? payload.Length : (payload.Length <= UInt16.MaxValue ? 126 : 127));
                 
-                //Write fin -> opcode
-                memoryStream.WriteByte(firstByte);
+                int header = FIN; //FIN (1 bit)
+                header = (header << 1) + RSV; //RSV1 (1 bit, unused)
+                header = (header << 1) + RSV; //RSV2 (1 bit, unused)
+                header = (header << 1) + RSV; //RSV3 (1 bit, unused)
+                header = (header << 4) + (int) opCode; //OP Code (4 bits)
 
-                if (payload != null)
+                header = (header << 1) + MASK; //Mask (1 bit)
+                header = (header << 7) + payloadLength; //Payload length
+
+                //Write the first two bytes to the stream
+                byte[] headerBytes = ConvertToMultiBytes((ushort)header, false);
+                memoryStream.Write(headerBytes, 0, 2);
+
+                //If we need to define the extended payload length
+                if (payloadLength > 125)
                 {
-                    //Write mask & payload length
-                    byte secondByte;
-                    if (payload.Length < 126)
-                        secondByte = (byte)payload.Length;
-                    else if (payload.Length <= ushort.MaxValue)
-                        secondByte = 126;
-                    else
-                        secondByte = 127;
+                    //Get the payload's entire length as either a 2 byte array or an 8 byte array
+                    byte[] length = payloadLength == 126 ? 
+                        ConvertToMultiBytes((ushort)payload.Length, false) : 
+                        ConvertToMultiBytes((ulong)payload.Length, false);
 
-                    memoryStream.WriteByte(secondByte);
-
-                    //Write extended payload length if necessary
-                    if (secondByte > 125)
-                    {
-                        byte[] payloadLengthBuffer = secondByte > 126 ? 
-                            BitConverter.GetBytes((ulong)payload.Length) :
-                            BitConverter.GetBytes((ushort)payload.Length);
-
-                        memoryStream.Write(payloadLengthBuffer, 0, payloadLengthBuffer.Length);
-                    }
-
-                    //Write Payload
-                    memoryStream.Write(payload, 0, payload.Length);
+                    //Write the variable bytes to a stream
+                    memoryStream.Write(length, 0, payloadLength == 126 ? 2 : 8);
                 }
-
-                byte[] buffer = memoryStream.ToArray();
+                    
+                //Write the payload to the stream
+                if (payload.Length > 0)
+                    memoryStream.Write(payload, 0, payload.Length);
+                
+                //Push entire frame to a byte array and send it to the client
+                byte[] bufferArray = memoryStream.ToArray();
 
                 try
                 {
                     if (Stream != null && Stream.CanWrite)
-                        Stream?.Write(buffer, 0, buffer.Length);
+                        Stream?.Write(bufferArray, 0, bufferArray.Length);
                 }
-                catch (ObjectDisposedException)
+                catch (ObjectDisposedException ex)
                 {
-                    //Console.WriteLine("EXCEPTION");
+                    _logger.Error(ex);
                 }
-                catch (IOException)
+                catch (IOException ex)
                 {
-                    //Console.WriteLine("EXCEPTION");
+                    _logger.Error(ex);
                 }
             }
+        }
+
+        /// <summary>
+        /// Converts to multi bytes.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <param name="littleEndian">if set to <c>true</c> [little endian].</param>
+        /// <returns></returns>
+        private byte[] ConvertToMultiBytes(ushort value, bool littleEndian)
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+
+            if (BitConverter.IsLittleEndian && !littleEndian)
+                Array.Reverse(bytes);
+
+            return bytes;
+        }
+
+        /// <summary>
+        /// Converts to multi bytes.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <param name="littleEndian">if set to <c>true</c> [little endian].</param>
+        /// <returns></returns>
+        private byte[] ConvertToMultiBytes(ulong value, bool littleEndian)
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+
+            if (BitConverter.IsLittleEndian && !littleEndian)
+                Array.Reverse(bytes);
+
+            return bytes;
         }
     }
 }

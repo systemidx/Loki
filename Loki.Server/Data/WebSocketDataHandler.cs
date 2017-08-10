@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using Loki.Common.Events;
 using Loki.Interfaces.Connections;
 using Loki.Interfaces.Data;
@@ -25,6 +26,18 @@ namespace Loki.Server.Data
         private readonly IDependencyUtility _dependencyUtility;
 
         /// <summary>
+        /// The partial text messages
+        /// </summary>
+        private readonly ConcurrentDictionary<string, string> _partialTextMessages = new ConcurrentDictionary<string, string>();
+
+        /// <summary>
+        /// The partial text messages
+        /// </summary>
+        private readonly ConcurrentDictionary<string, byte[]> _partialBinaryMessages = new ConcurrentDictionary<string, byte[]>();
+
+        #region Constructor
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="WebSocketDataHandler" /> class.
         /// </summary>
         /// <param name="dependencyUtility">The dependency utility.</param>
@@ -35,6 +48,8 @@ namespace Loki.Server.Data
             Logger = _dependencyUtility.Resolve<ILogger>();
             ConnectionManager = _dependencyUtility.Resolve<IWebSocketConnectionManager>();
         }
+
+        #endregion
 
         /// <summary>
         /// Called when [open].
@@ -70,6 +85,17 @@ namespace Loki.Server.Data
         /// <param name="args">The <see cref="T:PWebSocketServer.Common.Events.TextMultiFrameEventArgs" /> instance containing the event data.</param>
         public virtual void OnTextPart(IWebSocketConnection sender, TextMultiFrameEventArgs args)
         {
+            if (!_partialTextMessages.ContainsKey(sender.UniqueClientIdentifier))
+                _partialTextMessages[sender.UniqueClientIdentifier] = args.Message;
+            else
+                _partialTextMessages[sender.UniqueClientIdentifier] += args.Message;
+
+            if (!args.IsLastFrame)
+                return;
+
+            OnText(sender, new TextFrameEventArgs(_partialTextMessages[sender.UniqueClientIdentifier]));
+
+            _partialTextMessages[sender.UniqueClientIdentifier] = null;
         }
 
         /// <summary>
@@ -88,6 +114,24 @@ namespace Loki.Server.Data
         /// <param name="args">The <see cref="T:PWebSocketServer.Common.Events.BinaryMultiFrameEventArgs" /> instance containing the event data.</param>
         public virtual void OnBinaryPart(IWebSocketConnection sender, BinaryMultiFrameEventArgs args)
         {
+            if (!_partialBinaryMessages.ContainsKey(sender.UniqueClientIdentifier))
+                _partialBinaryMessages[sender.UniqueClientIdentifier] = args.Payload;
+            else
+            {
+                byte[] tempStorage = new byte[_partialBinaryMessages[sender.UniqueClientIdentifier].Length + args.Payload.Length];
+
+                Array.Copy(_partialBinaryMessages[sender.UniqueClientIdentifier], tempStorage, _partialBinaryMessages[sender.UniqueClientIdentifier].Length);
+                Array.Copy(args.Payload, tempStorage, args.Payload.Length);
+
+                _partialBinaryMessages[sender.UniqueClientIdentifier] = tempStorage;
+            }
+            
+            if (!args.IsLastFrame)
+                return;
+
+            OnBinary(sender, new BinaryFrameEventArgs(_partialBinaryMessages[sender.UniqueClientIdentifier]));
+
+            _partialBinaryMessages[sender.UniqueClientIdentifier] = null;
         }
 
         /// <summary>
