@@ -3,9 +3,6 @@ using Loki.Interfaces.Data;
 
 namespace Loki.Interfaces.Connections
 {
-    /// <summary>
-    /// 
-    /// </summary>
     public interface IWebSocketConnection : IDisposable
     {
         #region Properties
@@ -41,7 +38,15 @@ namespace Loki.Interfaces.Connections
         ///   <c>true</c> if this instance is alive; otherwise, <c>false</c>.
         /// </value>
         bool IsAlive { get; }
-        
+
+        /// <summary>
+        /// Returns true if ... is valid.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance is valid; otherwise, <c>false</c>.
+        /// </value>
+        bool IsValid { get; }
+
         /// <summary>
         /// Gets the HTTP metadata.
         /// </summary>
