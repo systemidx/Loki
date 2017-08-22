@@ -98,7 +98,15 @@ namespace Loki.Server.Connections
         #endregion
 
         #region Properties
-        
+
+        /// <summary>
+        /// Returns true if ... is valid.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if this instance is valid; otherwise, <c>false</c>.
+        /// </value>
+        public bool IsValid { get; private set; }
+
         /// <summary>
         /// The HTTP metadata
         /// </summary>
@@ -273,6 +281,9 @@ namespace Loki.Server.Connections
             if (IsAlive)
                 HandleHandshake();
 
+            if (!IsValid)
+                return;
+
             IWebSocketDataHandler handler = _routeTable[HttpMetadata.Route];
             if (handler == null)
             {
@@ -283,8 +294,6 @@ namespace Loki.Server.Connections
             while (IsAlive)
             {
                 HandleFrame(handler);
-
-                //todo: Handle incoming queued messages
 
                 Thread.Sleep(20);
             }
@@ -431,7 +440,9 @@ namespace Loki.Server.Connections
             const string WEB_SOCKET_VERSION_HEADER = "Sec-WebSocket-Version";
             
             HttpMetadata = new HttpMetadata(_frameReader.Stream);
-            
+            if (!HttpMetadata.IsValid)
+                return;
+
             if (string.IsNullOrEmpty(HttpMetadata.Route) || HttpMetadata.Headers.Count == 0)
             { 
                 KillConnection("Failed to read from stream");
@@ -458,6 +469,8 @@ namespace Loki.Server.Connections
 
             byte[] responseBytes = Encoding.UTF8.GetBytes(response);
             _frameReader.Stream.Write(responseBytes, 0, responseBytes.Length);
+
+            IsValid = true;
 
             IWebSocketDataHandler handler = _routeTable[HttpMetadata.Route];
             handler?.OnOpen(this, new ConnectionOpenedEventArgs(HttpMetadata.QueryStrings));

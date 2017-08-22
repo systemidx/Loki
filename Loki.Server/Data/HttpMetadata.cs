@@ -11,6 +11,8 @@ namespace Loki.Server.Data
     public class HttpMetadata : IHttpMetadata
     {
         public string Route { get; private set; }
+        public bool IsValid { get; private set; }
+
         public NameValueCollection QueryStrings { get; private set; }
         public Dictionary<string,string> Headers { get; } = new Dictionary<string, string>();
 
@@ -22,12 +24,17 @@ namespace Loki.Server.Data
         private void Parse(Stream stream)
         {
             string headerBlob = GetHeaderFromStream(stream);
+            if (headerBlob == null)
+                return;
+
             string[] headersWithRoute = GetHeadersFromStreamBlob(headerBlob);
 
             if (headersWithRoute == null)
                 return;
 
             ParseAndSet(headersWithRoute);
+
+            IsValid = true;
         }
 
         private string GetHeaderFromStream(Stream incomingStream)
