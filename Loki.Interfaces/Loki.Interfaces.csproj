@@ -10,8 +10,8 @@
     <RepositoryUrl>https://github.com/systemidx/Loki</RepositoryUrl>
     <Copyright>© 2017 Systemidx</Copyright>
     <PackageTags>Loki WebSocket WebSocketServer NET csharp ws wss</PackageTags>
-    <Version>1.0.1.4</Version>
-    <AssemblyVersion>1.0.1.4</AssemblyVersion>
+    <Version>1.0.1.5</Version>
+    <AssemblyVersion>1.0.1.5</AssemblyVersion>
     <FileVersion>1.0.1.4</FileVersion>
     <Authors>systemidx</Authors>
   </PropertyGroup>
