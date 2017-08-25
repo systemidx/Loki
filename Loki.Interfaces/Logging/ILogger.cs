@@ -6,6 +6,16 @@ namespace Loki.Interfaces.Logging
     public interface ILogger
     {
         /// <summary>
+        /// Gets or sets the log level.
+        /// </summary>
+        /// <value>
+        /// The log level.
+        /// </value>
+        LogLevel LogLevel { get; set; }
+
+        #region Events
+
+        /// <summary>
         /// Occurs when [on error].
         /// </summary>
         event EventHandler<LokiErrorEventArgs> OnError;
@@ -29,6 +39,8 @@ namespace Loki.Interfaces.Logging
         /// Occurs when [on custom].
         /// </summary>
         event EventHandler<LokiCustomEventArgs> OnCustom;
+
+        #endregion
 
         /// <summary>
         /// Errors the specified e.

@@ -7,6 +7,14 @@ namespace Loki.Server.Logging
     public class Logger : ILogger
     {
         /// <summary>
+        /// Gets or sets the log level.
+        /// </summary>
+        /// <value>
+        /// The log level.
+        /// </value>
+        public LogLevel LogLevel { get; set; }
+
+        /// <summary>
         /// Occurs when [on error].
         /// </summary>
         public event EventHandler<LokiErrorEventArgs> OnError;
@@ -32,12 +40,22 @@ namespace Loki.Server.Logging
         public event EventHandler<LokiCustomEventArgs> OnCustom;
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="Logger"/> class.
+        /// </summary>
+        /// <param name="logLevel">The log level.</param>
+        public Logger(LogLevel logLevel = LogLevel.Info)
+        {
+            LogLevel = logLevel;
+        }
+
+        /// <summary>
         /// Errors the specified e.
         /// </summary>
         /// <param name="e">The <see cref="LokiErrorEventArgs"/> instance containing the event data.</param>
         public void Error(Exception e)
         {
-            OnError?.Invoke(this, new LokiErrorEventArgs(e));
+            if (LogLevel <= LogLevel.Error)
+                OnError?.Invoke(this, new LokiErrorEventArgs(e));
         }
 
         /// <summary>
@@ -46,7 +64,8 @@ namespace Loki.Server.Logging
         /// <param name="message">The message.</param>
         public void Warn(string message)
         {
-            OnWarn?.Invoke(this, new LokiWarnEventArgs(message));
+            if (LogLevel <= LogLevel.Warn)
+                OnWarn?.Invoke(this, new LokiWarnEventArgs(message));
         }
 
         /// <summary>
@@ -55,7 +74,8 @@ namespace Loki.Server.Logging
         /// <param name="message">The message.</param>
         public void Debug(string message)
         {
-            OnDebug?.Invoke(this, new LokiDebugEventArgs(message));
+            if (LogLevel <= LogLevel.Debug)
+                OnDebug?.Invoke(this, new LokiDebugEventArgs(message));
         }
 
         /// <summary>
@@ -64,7 +84,8 @@ namespace Loki.Server.Logging
         /// <param name="message">The message.</param>
         public void Info(string message)
         {
-            OnInfo?.Invoke(this, new LokiInfoEventArgs(message));
+            if (LogLevel <= LogLevel.Info)
+                OnInfo?.Invoke(this, new LokiInfoEventArgs(message));
         }
 
         /// <summary>
@@ -74,7 +95,8 @@ namespace Loki.Server.Logging
         /// <param name="message">The message.</param>
         public void Custom(string eventType, string message)
         {
-            OnCustom?.Invoke(this, new LokiCustomEventArgs(eventType, message));
+            if (LogLevel <= LogLevel.Info)
+                OnCustom?.Invoke(this, new LokiCustomEventArgs(eventType, message));
         }
 
         /// <summary>
@@ -84,7 +106,8 @@ namespace Loki.Server.Logging
         /// <param name="message">The message.</param>
         public void Custom(Enum eventType, string message)
         {
-            OnCustom?.Invoke(this, new LokiCustomEventArgs(eventType, message));
+            if (LogLevel <= LogLevel.Info)
+                OnCustom?.Invoke(this, new LokiCustomEventArgs(eventType, message));
         }
 
         /// <summary>
@@ -94,7 +117,8 @@ namespace Loki.Server.Logging
         /// <param name="message">The message.</param>
         public void Custom(Type eventType, string message)
         {
-            OnCustom?.Invoke(this, new LokiCustomEventArgs(eventType, message));
+            if (LogLevel <= LogLevel.Info)
+                OnCustom?.Invoke(this, new LokiCustomEventArgs(eventType, message));
         }
     }
 }

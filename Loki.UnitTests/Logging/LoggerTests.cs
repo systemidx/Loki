@@ -105,5 +105,27 @@ namespace Loki.UnitTests.Logging
             
             logger.Custom(typeof(CustomType), "Message");
         }
+
+        [Fact]
+        public void LoggerRendersOutputWhenLogLevelIsCorrect()
+        {
+            int calls = 0;
+
+            ILogger logger = new Logger();
+            logger.OnInfo += (sender, args) =>
+            {
+                calls += 1;
+            };
+            logger.OnDebug+= (sender, args) =>
+            {
+                calls += 1;
+            };
+
+            logger.LogLevel = LogLevel.Info;
+            logger.Info("Test");
+            logger.Debug("Test");
+
+            Assert.Equal(1, calls);
+        }
     }
 }
