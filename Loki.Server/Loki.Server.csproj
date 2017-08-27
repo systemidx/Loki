@@ -11,9 +11,9 @@
     <PackageTags>Loki WebSocket WebSocketServer NET csharp ws wss</PackageTags>
     <Authors>systemidx</Authors>
     <Copyright>© 2017 Systemidx</Copyright>
-    <Version>1.0.1.5</Version>
-    <AssemblyVersion>1.0.1.5</AssemblyVersion>
-    <FileVersion>1.0.1.5</FileVersion>
+    <Version>1.0.1.6</Version>
+    <AssemblyVersion>1.0.1.6</AssemblyVersion>
+    <FileVersion>1.0.1.6</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

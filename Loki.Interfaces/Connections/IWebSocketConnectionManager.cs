@@ -43,9 +43,23 @@ namespace Loki.Interfaces.Connections
         void Broadcast(string message);
 
         /// <summary>
+        /// Broadcasts the specified client identifier.
+        /// </summary>
+        /// <param name="clientIdentifier">The client identifier.</param>
+        /// <param name="message">The message.</param>
+        void Broadcast(string clientIdentifier, string message);
+
+        /// <summary>
         /// Broadcasts the specified bytes.
         /// </summary>
         /// <param name="bytes">The bytes.</param>
         void Broadcast(byte[] bytes);
+
+        /// <summary>
+        /// Broadcasts the specified client identifier.
+        /// </summary>
+        /// <param name="clientIdentifier">The client identifier.</param>
+        /// <param name="bytes">The bytes.</param>
+        void Broadcast(string clientIdentifier, byte[] bytes);
     }
 }
