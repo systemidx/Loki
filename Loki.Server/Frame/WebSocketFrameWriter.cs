@@ -17,17 +17,42 @@ namespace Loki.Server.Frame
         /// </summary>
         private readonly ILogger _logger;
 
+        /// <summary>
+        /// The stream lock
+        /// </summary>
+        private readonly object _streamLock = new object();
+
         #endregion
 
         #region Properties
-
+        
         /// <summary>
         /// Gets or sets the stream.
         /// </summary>
         /// <value>
         /// The stream.
         /// </value>
-        public Stream Stream { get; set; }
+        public Stream Stream
+        {
+            private get
+            {
+                return _stream;
+            }
+            set
+            {
+                lock (_streamLock)
+                    _stream = value;
+            } 
+        }
+
+        #endregion
+
+        #region Member Variables
+
+        /// <summary>
+        /// The stream
+        /// </summary>
+        private Stream _stream;
 
         #endregion
 
@@ -90,9 +115,6 @@ namespace Loki.Server.Frame
         /// <param name="isLastFrame">if set to <c>true</c> [is last frame].</param>
         public void Write(WebSocketOpCode opCode, byte[] payload, bool isLastFrame)
         {
-            if (Stream == null || !Stream.CanWrite)
-                return;
-            
             const int FIN = 0x1;  //We are not supporting continuation frames from the server
             const int MASK = 0x0; //We cannot mask data flowing from the server to the client
             const int RSV = 0x0;  //RSVs are currently unused in the WebSocket specification
@@ -143,8 +165,11 @@ namespace Loki.Server.Frame
 
                 try
                 {
-                    if (Stream != null && Stream.CanWrite)
-                        Stream?.Write(bufferArray, 0, bufferArray.Length);
+                    lock (_streamLock)
+                    {
+                        if (Stream != null && Stream.CanWrite)
+                            Stream?.Write(bufferArray, 0, bufferArray.Length);
+                    }
                 }
                 catch (ObjectDisposedException ex)
                 {

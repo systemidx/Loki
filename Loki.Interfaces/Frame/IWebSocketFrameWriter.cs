@@ -11,7 +11,7 @@ namespace Loki.Interfaces.Frame
         /// <value>
         /// The stream.
         /// </value>
-        Stream Stream { get; set; }
+        Stream Stream { set; }
 
         /// <summary>
         /// Writes the close.
