@@ -62,7 +62,7 @@ namespace Loki.Server.Connections
             IWebSocketConnection socket = new WebSocketConnection(connection, _dependencyUtility);
             socket.Listen();
 
-            _clientMap[socket] = null;
+            _clientMap[socket] = new object();
         }
 
         /// <summary>
@@ -105,6 +105,23 @@ namespace Loki.Server.Connections
         }
 
         /// <summary>
+        /// Broadcasts the specified client identifier.
+        /// </summary>
+        /// <param name="clientIdentifier">The client identifier.</param>
+        /// <param name="message">The message.</param>
+        public void Broadcast(string clientIdentifier, string message)
+        {
+            foreach (var connection in _clientMap.Where(x => x.Key.ClientIdentifier == clientIdentifier))
+            {
+                lock(connection.Value)
+                { 
+                    if (connection.Key.IsAlive)
+                        connection.Key.SendText(message);
+                }
+            }
+        }
+
+        /// <summary>
         /// Broadcasts the specified bytes.
         /// </summary>
         /// <param name="bytes">The bytes.</param>
@@ -113,6 +130,23 @@ namespace Loki.Server.Connections
             foreach (var connection in _clientMap)
                 if (connection.Key.IsAlive)
                     connection.Key.SendBinary(bytes);
+        }
+
+        /// <summary>
+        /// Broadcasts the specified client identifier.
+        /// </summary>
+        /// <param name="clientIdentifier">The client identifier.</param>
+        /// <param name="bytes">The bytes.</param>
+        public void Broadcast(string clientIdentifier, byte[] bytes)
+        {
+            foreach (var connection in _clientMap.Where(x => x.Key.ClientIdentifier == clientIdentifier))
+            {
+                lock (connection.Value)
+                {
+                    if (connection.Key.IsAlive)
+                        connection.Key.SendBinary(bytes);
+                }
+            }
         }
 
         /// <summary>
