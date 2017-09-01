@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -24,7 +25,7 @@ using Loki.Server.Threading;
 
 namespace Loki.Server
 {
-    public class Server : IServer
+    public class WebSocketServer : IServer
     {
         #region Readonly Variables
 
@@ -120,7 +121,7 @@ namespace Loki.Server
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Server"/> class.
+        /// Initializes a new instance of the <see cref="WebSocketServer"/> class.
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <param name="host">The host.</param>
@@ -128,7 +129,7 @@ namespace Loki.Server
         /// <param name="dependencyUtility">The dependency utility.</param>
         /// <param name="listenerThreads">The listener threads.</param>
         /// <param name="clientThreadMultiplier">The client thread multiplier.</param>
-        public Server(string id, string host, int port, IDependencyUtility dependencyUtility = null, int listenerThreads = 1, int clientThreadMultiplier = 3)
+        public WebSocketServer(string id, string host, int port, IDependencyUtility dependencyUtility = null, int listenerThreads = 1, int clientThreadMultiplier = 3)
         {
             Id = id;
             Host = host;
@@ -158,7 +159,7 @@ namespace Loki.Server
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Server"/> class.
+        /// Initializes a new instance of the <see cref="WebSocketServer"/> class.
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <param name="host">The host.</param>
@@ -166,7 +167,7 @@ namespace Loki.Server
         /// <param name="dependencyUtility">The dependency utility.</param>
         /// <param name="listenerThreads">The listener threads.</param>
         /// <param name="clientThreadMultiplier">The client thread multiplier.</param>
-        public Server(string id, IPAddress host, int port, IDependencyUtility dependencyUtility = null, int listenerThreads = 1, int clientThreadMultiplier = 3)
+        public WebSocketServer(string id, IPAddress host, int port, IDependencyUtility dependencyUtility = null, int listenerThreads = 1, int clientThreadMultiplier = 3)
             : this(id, host.ToString(), port, dependencyUtility, listenerThreads, clientThreadMultiplier)
         {
         }
@@ -203,7 +204,7 @@ namespace Loki.Server
 
             _logger.Debug("Starting dead connection handler thread");
             _handlerThreads.Add(_threadHelper.CreateAndRun(HandleDeadConnections));
-
+            
             if (!block)
                 return;
 
@@ -248,7 +249,7 @@ namespace Loki.Server
         {
             Stop();
         }
-
+        
         /// <summary>
         /// Listens this instance.
         /// </summary>
@@ -259,12 +260,12 @@ namespace Loki.Server
                 try
                 {
                     TcpClient client = await _clientHandler.AcceptTcpClientAsync();
-                    client.Client.NoDelay = NoDelay;
 
                     _incomingClientQueue.Enqueue(client);
                 }
-                catch (SocketException)
+                catch (SocketException ex)
                 {
+                    _logger.Error(ex);
                 }
             }
         }
@@ -283,6 +284,8 @@ namespace Loki.Server
                     Thread.Sleep(50);
                     continue;
                 }
+
+                client.Client.NoDelay = NoDelay;
 
                 _connectionManager.RegisterConnection(client);
             }

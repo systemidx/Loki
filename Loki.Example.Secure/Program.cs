@@ -28,7 +28,7 @@ namespace Loki.Example.Secure
             IPAddress host = IPAddress.Parse("0.0.0.0");
 
             //Start the server
-            using (IServer server = new Server.Server("MyServerName", host, port, dependencyUtility))
+            using (IServer server = new Server.WebSocketServer("MyServerName", host, port, dependencyUtility))
             {
                 //Start listening and blocking the main thread
                 server.Run();

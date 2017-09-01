@@ -30,7 +30,7 @@ namespace Loki.Server.Security
         /// <value>
         ///   <c>true</c> if enabled; otherwise, <c>false</c>.
         /// </value>
-        public bool Enabled { get; }
+        public bool Enabled => _enabled && Certificate != null;
 
         /// <summary>
         /// Gets a value indicating whether [client certificate required].
@@ -50,6 +50,12 @@ namespace Loki.Server.Security
 
         #endregion
 
+        #region Readonly Variables
+
+        private readonly bool _enabled;
+
+        #endregion
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SecurityContainer" /> class.
         /// </summary>
@@ -64,7 +70,8 @@ namespace Loki.Server.Security
             EnabledProtocols = enabledProtocols;
             ClientCertificateRequired = clientCertificateRequired;
             CertificateRevocationEnabled = certificateRevocationEnabled;
-            Enabled = enabled;
+
+            _enabled = enabled;
         }
     }
 }

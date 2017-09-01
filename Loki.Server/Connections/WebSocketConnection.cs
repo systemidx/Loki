@@ -95,6 +95,11 @@ namespace Loki.Server.Connections
         /// </summary>
         private WebSocketOpCode _multiFrameOpCode;
 
+        /// <summary>
+        /// The stop requested
+        /// </summary>
+        private bool _stopRequested;
+
         #endregion
 
         #region Properties
@@ -142,7 +147,7 @@ namespace Loki.Server.Connections
         /// <value>
         ///   <c>true</c> if this instance is alive; otherwise, <c>false</c>.
         /// </value>
-        public bool IsAlive => !_isDisposed && _client.Connected && _client.Client.Connected;
+        public bool IsAlive => !_isDisposed && _client.Connected && _client.Client.Connected & !_stopRequested;
 
         #endregion
 
@@ -194,6 +199,8 @@ namespace Loki.Server.Connections
         {
             KillConnection(null);
         }
+
+        #region Send Methods
 
         /// <summary>
         /// Sends the text.
@@ -265,8 +272,10 @@ namespace Loki.Server.Connections
             _frameWriter.Write(WebSocketOpCode.Pong, null, true);
         }
 
+        #endregion
+
         #region Private Methods
-        
+
         /// <summary>
         /// Receives this instance.
         /// </summary>
@@ -403,16 +412,24 @@ namespace Loki.Server.Connections
                 _frameReader.Stream = sslStream;
                 _frameWriter.Stream = sslStream;
             }
-            catch (AuthenticationException)
+            catch (ArgumentNullException ex)
             {
-                KillConnection("Unauthorized");
-            }
-            catch (AggregateException)
-            {
+                _logger.Error(ex);
                 KillConnection(null);
             }
-            catch (IOException)
+            catch (AuthenticationException ex)
             {
+                _logger.Error(ex);
+                KillConnection("Unauthorized");
+            }
+            catch (AggregateException ex)
+            {
+                _logger.Error(ex);
+                KillConnection(null);
+            }
+            catch (IOException ex)
+            {
+                _logger.Error(ex);
                 KillConnection(null);
             }
         }
@@ -426,7 +443,9 @@ namespace Loki.Server.Connections
 
             if (message != null)
                 _frameWriter.WriteClose();
-            
+
+            _stopRequested = true;
+
             Dispose();
         }
         
@@ -439,7 +458,7 @@ namespace Loki.Server.Connections
             const string WEB_SOCKET_KEY_HEADER = "Sec-WebSocket-Key";
             const string WEB_SOCKET_VERSION_HEADER = "Sec-WebSocket-Version";
             
-            HttpMetadata = new HttpMetadata(_frameReader.Stream);
+            HttpMetadata = new HttpMetadata(_frameReader.Stream, _dependencyUtility);
             if (!HttpMetadata.IsValid)
                 return;
 
