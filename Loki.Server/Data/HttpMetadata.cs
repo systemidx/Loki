@@ -4,20 +4,28 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Text;
 using Loki.Interfaces.Data;
+using Loki.Interfaces.Dependency;
+using Loki.Interfaces.Logging;
 using Loki.Server.Exceptions;
 
 namespace Loki.Server.Data
 {
     public class HttpMetadata : IHttpMetadata
     {
+        private readonly IDependencyUtility _dependencyUtility;
+        private readonly ILogger _logger;
+
         public string Route { get; private set; }
         public bool IsValid { get; private set; }
 
         public NameValueCollection QueryStrings { get; private set; }
         public Dictionary<string,string> Headers { get; } = new Dictionary<string, string>();
 
-        public HttpMetadata(Stream stream)
+        public HttpMetadata(Stream stream, IDependencyUtility dependencyUtility)
         {
+            _dependencyUtility = dependencyUtility;
+            _logger = _dependencyUtility.Resolve<ILogger>();
+
             Parse(stream);
         }
 
@@ -55,8 +63,9 @@ namespace Loki.Server.Data
                 {
                     bytesRead = incomingStream.Read(buffer, offset, HEADER_LENGTH - offset);
                 }
-                catch (IOException)
+                catch (IOException ex)
                 {
+                    _logger.Error(ex);
                     return null;
                 }
 

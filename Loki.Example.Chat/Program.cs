@@ -4,6 +4,7 @@ using Loki.Common.Events;
 using Loki.Interfaces;
 using Loki.Interfaces.Dependency;
 using Loki.Interfaces.Logging;
+using Loki.Server;
 using Loki.Server.Dependency;
 using Loki.Server.Logging;
 
@@ -29,7 +30,7 @@ namespace Loki.Example.Chat
             IPAddress host = IPAddress.Parse("0.0.0.0");
 
             //Start the server
-            using (IServer server = new Server.Server("MyServerName", host, port, dependencyUtility))
+            using (IServer server = new WebSocketServer("MyServerName", host, port, dependencyUtility))
             {
                 //Start listening and blocking the main thread
                 server.Run();

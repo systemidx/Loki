@@ -28,7 +28,7 @@ namespace Loki.UnitTests
             dependencyUtility.Register<ITcpHandler>(new Mock<ITcpHandler>().Object);
             dependencyUtility.Register<IThreadHelper>(new Mock<IThreadHelper>().Object);
 
-            using (IServer server = new Server.Server(string.Empty, string.Empty, 0, dependencyUtility, 1, 3))
+            using (IServer server = new Server.WebSocketServer(string.Empty, string.Empty, 0, dependencyUtility, 1, 3))
             {
                 server.Run(false);
 
@@ -53,7 +53,7 @@ namespace Loki.UnitTests
             dependencyUtility.Register<ITcpHandler>(new Mock<ITcpHandler>().Object);
             dependencyUtility.Register<IThreadHelper>(threadHelper.Object);
 
-            using (IServer server = new Server.Server(string.Empty, string.Empty, 0, dependencyUtility, 2, 4))
+            using (IServer server = new Server.WebSocketServer(string.Empty, string.Empty, 0, dependencyUtility, 2, 4))
             {
                 server.Run(false);
 
