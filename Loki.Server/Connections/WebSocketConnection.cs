@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -116,6 +117,14 @@ namespace Loki.Server.Connections
         /// The HTTP metadata
         /// </summary>
         public IHttpMetadata HttpMetadata { get; private set; }
+
+        /// <summary>
+        /// Gets the metadata.
+        /// </summary>
+        /// <value>
+        /// The metadata.
+        /// </value>
+        public Dictionary<string, object> Metadata { get; private set; } = new Dictionary<string, object>();
 
         /// <summary>
         /// Gets the client identifier.

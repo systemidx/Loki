@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Loki.Interfaces.Data;
 
 namespace Loki.Interfaces.Connections
@@ -54,6 +55,14 @@ namespace Loki.Interfaces.Connections
         /// The HTTP metadata.
         /// </value>
         IHttpMetadata HttpMetadata { get; }
+
+        /// <summary>
+        /// Gets the metadata.
+        /// </summary>
+        /// <value>
+        /// The metadata.
+        /// </value>
+        Dictionary<string, object> Metadata { get; }
 
         #endregion
 
