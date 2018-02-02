@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net452;net46;net461;net462;netstandard1.6;netcoreapp1.1</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageLicenseUrl>https://github.com/systemidx/Loki/blob/master/LICENSE</PackageLicenseUrl>
@@ -11,9 +11,9 @@
     <PackageTags>Loki WebSocket WebSocketServer NET csharp ws wss</PackageTags>
     <Authors>systemidx</Authors>
     <Copyright>© 2017 Systemidx</Copyright>
-    <Version>1.0.2.1</Version>
-    <AssemblyVersion>1.0.2.1</AssemblyVersion>
-    <FileVersion>1.0.2.1</FileVersion>
+    <Version>1.1.0.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
