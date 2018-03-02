@@ -2,12 +2,7 @@
 A C# based websocket server designed for high throughput, efficiency, and modularization.
 
 ## Targets
-* .NET Core 1.1
-* .NET Standard 1.6
-* .NET Framework 4.5.2
-* .NET Framework 4.6
-* .NET Framework 4.6.1
-* .NET Framework 4.6.2
+* .NET Standard 2.0
 
 ## Project Status
 This project is currently in **active development**. As such, please think twice before using it in production! For a more mature project, please take a look at [WebSocket-Sharp](https://github.com/sta/websocket-sharp).
